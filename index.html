@@ -1,0 +1,2454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Leafy – AI Plant Care</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --green-deep: #1a2e1a;
+      --green-mid: #2d5a27;
+      --green-accent: #4caf50;
+      --green-light: #a8d5a2;
+      --cream: #f5f0e8;
+      --rust: #c17f3e;
+      --text-dark: #1a1a1a;
+      --text-muted: #6b7280;
+      --card-bg: rgba(255,255,255,0.92);
+      --shadow: 0 8px 32px rgba(26,46,26,0.12);
+      --bg: var(--cream);
+      --nav-bg: rgba(245,240,232,0.95);
+      --border: rgba(168,213,162,0.3);
+      --input-bg: white;
+    }
+    body.dark {
+      --green-deep: #a8d5a2;
+      --green-mid: #6dbf67;
+      --green-accent: #5ecf62;
+      --green-light: #2d5a27;
+      --cream: #121a12;
+      --rust: #e8a85c;
+      --text-dark: #f0ede6;
+      --text-muted: #9ca3af;
+      --card-bg: rgba(30,45,30,0.95);
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --bg: #121a12;
+      --nav-bg: rgba(18,26,18,0.97);
+      --border: rgba(109,191,103,0.2);
+      --input-bg: #1e2d1e;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text-dark);
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background 0.3s, color 0.3s;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse at 10% 20%, rgba(76,175,80,0.08) 0%, transparent 50%),
+                  radial-gradient(ellipse at 90% 80%, rgba(45,90,39,0.1) 0%, transparent 50%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--nav-bg);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem; color: var(--green-mid);
+      display: flex; align-items: center; gap: 0.5rem;
+      cursor: pointer; text-decoration: none;
+    }
+    .logo-leaf { font-size: 1.6rem; animation: sway 3s ease-in-out infinite; display: inline-block; }
+    @keyframes sway { 0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(5deg)} }
+    nav ul { list-style: none; display: flex; gap: 1.5rem; }
+    nav ul li a {
+      text-decoration: none; color: var(--text-muted);
+      font-size: 0.88rem; font-weight: 500; cursor: pointer;
+      transition: color 0.2s; padding: 0.3rem 0;
+      border-bottom: 2px solid transparent;
+    }
+    nav ul li a:hover, nav ul li a.active { color: var(--green-mid); border-bottom-color: var(--green-mid); }
+    .nav-right { display: flex; align-items: center; gap: 0.6rem; }
+    .btn-nav {
+      background: var(--green-mid); color: white; border: none;
+      padding: 0.5rem 1.2rem; border-radius: 100px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+      font-weight: 500; cursor: pointer; transition: background 0.2s, transform 0.1s;
+    }
+    .btn-nav:hover { background: var(--green-deep); transform: translateY(-1px); }
+    .dark-toggle {
+      background: var(--card-bg); border: 1px solid var(--border);
+      width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 1rem;
+      transition: all 0.2s;
+    }
+    .dark-toggle:hover { transform: scale(1.1); }
+    .nav-streak {
+      background: linear-gradient(135deg, #ff9500, #ff6b00);
+      color: white; border: none;
+      padding: 0.3rem 0.75rem; border-radius: 100px;
+      font-size: 0.78rem; font-weight: 600; cursor: default;
+      display: flex; align-items: center; gap: 0.3rem;
+    }
+
+    /* ── PAGES ── */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── HOME PAGE ── */
+    .hero {
+      min-height: 88vh; display: flex; flex-direction: column;
+      justify-content: center; align-items: flex-start;
+      padding: 4rem 3rem; max-width: 1200px; margin: 0 auto;
+      position: relative; z-index: 1;
+    }
+    .hero-tag {
+      background: var(--green-light); color: var(--green-deep);
+      padding: 0.3rem 1rem; border-radius: 100px;
+      font-size: 0.8rem; font-weight: 500; letter-spacing: 0.08em;
+      text-transform: uppercase; margin-bottom: 1.5rem;
+      animation: fadeUp 0.6s ease both;
+    }
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.8rem, 7vw, 5.5rem); line-height: 1.05;
+      color: var(--green-deep); max-width: 720px;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+    .hero h1 em { font-style: italic; color: var(--rust); }
+    .hero p {
+      margin-top: 1.5rem; font-size: 1.1rem; color: var(--text-muted);
+      max-width: 480px; line-height: 1.7; font-weight: 300;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+    .hero-actions {
+      margin-top: 2.5rem; display: flex; gap: 1rem; flex-wrap: wrap;
+      animation: fadeUp 0.6s 0.3s ease both;
+    }
+    .btn-primary {
+      background: var(--green-mid); color: white; border: none;
+      padding: 0.85rem 2rem; border-radius: 100px;
+      font-family: 'DM Sans', sans-serif; font-size: 1rem;
+      font-weight: 500; cursor: pointer; transition: all 0.2s;
+      box-shadow: 0 4px 16px rgba(45,90,39,0.3);
+    }
+    .btn-primary:hover { background: var(--green-deep); transform: translateY(-2px); }
+    .btn-secondary {
+      background: transparent; color: var(--green-mid);
+      border: 1.5px solid var(--green-mid); padding: 0.85rem 2rem;
+      border-radius: 100px; font-family: 'DM Sans', sans-serif;
+      font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-secondary:hover { background: var(--green-mid); color: white; }
+
+    .hero-visual {
+      position: absolute; right: 3rem; top: 50%; transform: translateY(-50%);
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+    }
+    @media(max-width:900px){.hero-visual{display:none}}
+    .float-card {
+      background: var(--card-bg); backdrop-filter: blur(8px);
+      border: 1px solid var(--border); border-radius: 20px;
+      padding: 1.2rem; box-shadow: var(--shadow); min-width: 150px;
+    }
+    .float-card:nth-child(2){margin-top:2rem}
+    .float-card:nth-child(3){margin-top:-1rem}
+    .float-card .plant-emoji{font-size:2.2rem;margin-bottom:0.5rem}
+    .float-card .plant-name{font-family:'Playfair Display',serif;font-size:0.9rem;color:var(--green-deep)}
+    .float-card .plant-status{font-size:0.75rem;color:var(--text-muted);margin-top:0.2rem}
+    .water-badge {
+      display:inline-flex;align-items:center;gap:0.3rem;margin-top:0.6rem;
+      background:rgba(76,175,80,0.12);color:var(--green-mid);
+      padding:0.25rem 0.6rem;border-radius:100px;font-size:0.7rem;font-weight:500;
+    }
+    .water-badge.overdue{background:rgba(193,127,62,0.12);color:var(--rust)}
+
+    .stats-bar {
+      background: var(--green-deep); color: white; padding: 2rem;
+      display: flex; justify-content: center; gap: 4rem; position: relative; z-index: 1;
+      flex-wrap: wrap;
+    }
+    body.dark .stats-bar { background: rgba(30,45,30,0.8); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .stat{text-align:center;padding:0.5rem}
+    .stat-num{font-family:'Playfair Display',serif;font-size:2.5rem;color:var(--green-light)}
+    .stat-label{font-size:0.85rem;color:rgba(255,255,255,0.6);margin-top:0.2rem}
+
+    .features-section {
+      max-width: 1200px; margin: 0 auto; padding: 4rem 3rem;
+      position: relative; z-index: 1;
+    }
+    .section-title{font-family:'Playfair Display',serif;font-size:2.2rem;color:var(--green-deep);margin-bottom:0.5rem}
+    .section-sub{color:var(--text-muted);font-size:1rem;margin-bottom:3rem}
+    .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;margin-top:2rem}
+    .feature-card {
+      background:var(--card-bg);border:1px solid var(--border);
+      border-radius:24px;padding:2rem;box-shadow:var(--shadow);
+      transition:transform 0.2s,box-shadow 0.2s;
+    }
+    .feature-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(26,46,26,0.16)}
+    .feature-icon{font-size:2.5rem;margin-bottom:1rem;display:block}
+    .feature-card h3{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--green-deep);margin-bottom:0.5rem}
+    .feature-card p{font-size:0.88rem;color:var(--text-muted);line-height:1.6}
+    .feature-badge {
+      display: inline-block; background: rgba(76,175,80,0.12); color: var(--green-mid);
+      font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 100px;
+      margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.06em;
+    }
+
+    /* ── DASHBOARD PAGE ── */
+    .dashboard-wrap { max-width: 1200px; margin: 0 auto; padding: 2.5rem 3rem; position: relative; z-index: 1; }
+    .dashboard-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem; }
+    .greeting{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--green-deep)}
+    .greeting span{font-style:italic;color:var(--rust)}
+    .greeting-sub{color:var(--text-muted);font-size:0.9rem;margin-top:0.3rem}
+    .dashboard-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+    /* Today View / Quick Stats */
+    .today-stats {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem; margin-bottom: 2rem;
+    }
+    .today-stat-card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 18px; padding: 1.2rem 1.5rem;
+      box-shadow: var(--shadow); display: flex; align-items: center; gap: 1rem;
+    }
+    .today-stat-icon { font-size: 2rem; }
+    .today-stat-num { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--green-mid); }
+    .today-stat-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.1rem; }
+
+    /* Room filter tabs */
+    .room-tabs {
+      display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+    }
+    .room-tab {
+      background: var(--card-bg); border: 1px solid var(--border);
+      color: var(--text-muted); padding: 0.4rem 1rem; border-radius: 100px;
+      font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .room-tab.active, .room-tab:hover { background: var(--green-mid); color: white; border-color: var(--green-mid); }
+
+    /* Overdue alert banner */
+    .overdue-banner {
+      background: rgba(193,127,62,0.1); border: 1px solid rgba(193,127,62,0.3);
+      border-radius: 16px; padding: 1rem 1.5rem; margin-bottom: 2rem;
+      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    }
+    .overdue-banner-icon { font-size: 1.5rem; }
+    .overdue-banner-text { flex: 1; }
+    .overdue-banner-title { font-weight: 500; color: var(--rust); font-size: 0.95rem; }
+    .overdue-banner-sub { font-size: 0.82rem; color: var(--text-muted); margin-top: 0.1rem; }
+
+    .plants-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.5rem}
+    .plant-card {
+      background:var(--card-bg);border:1px solid var(--border);
+      border-radius:24px;padding:1.5rem;box-shadow:var(--shadow);
+      cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;position:relative;overflow:hidden;
+    }
+    .plant-card::before {
+      content:'';position:absolute;top:0;right:0;width:80px;height:80px;
+      background:radial-gradient(circle,rgba(168,213,162,0.2) 0%,transparent 70%);
+      border-radius:50%;
+    }
+    .plant-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(26,46,26,0.16)}
+    .plant-card-emoji{font-size:3rem;margin-bottom:1rem}
+    .plant-card-name{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--green-deep)}
+    .plant-card-type{font-size:0.8rem;color:var(--text-muted);margin-top:0.2rem;text-transform:uppercase;letter-spacing:0.06em}
+    .plant-room-badge {
+      display: inline-block; background: rgba(168,213,162,0.2); color: var(--green-mid);
+      font-size: 0.72rem; font-weight: 500; padding: 0.15rem 0.5rem; border-radius: 100px;
+      margin-top: 0.3rem;
+    }
+    .plant-card-divider{height:1px;background:var(--border);margin:1rem 0}
+    .plant-meta{display:flex;flex-direction:column;gap:0.4rem}
+    .plant-meta-row{display:flex;align-items:center;justify-content:space-between;font-size:0.83rem}
+    .plant-meta-label{color:var(--text-muted)}
+    .plant-meta-value{font-weight:500;color:var(--text-dark)}
+    .plant-meta-value.urgent{color:var(--rust)}
+    .plant-meta-value.ok{color:var(--green-mid)}
+    .water-bar{height:4px;background:var(--border);border-radius:100px;margin-top:0.8rem;overflow:hidden}
+    .water-bar-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--green-accent),var(--green-light));transition:width 0.5s}
+    .water-bar-fill.low{background:linear-gradient(90deg,var(--rust),#e8a85c)}
+    .plant-card-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+    .btn-water {
+      flex: 1; background: var(--green-mid); color: white; border: none;
+      padding: 0.5rem; border-radius: 10px; font-size: 0.82rem; font-weight: 500;
+      cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+    }
+    .btn-water:hover { background: var(--green-deep); }
+    .btn-details {
+      background: var(--border); color: var(--text-muted); border: none;
+      padding: 0.5rem 0.75rem; border-radius: 10px; font-size: 0.82rem;
+      cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+    }
+    .btn-details:hover { background: var(--green-light); color: var(--green-deep); }
+    /* Gamification badge on card */
+    .plant-xp-badge {
+      position: absolute; top: 1rem; right: 1rem;
+      background: linear-gradient(135deg, #ffd700, #ff9500);
+      color: white; font-size: 0.65rem; font-weight: 700;
+      padding: 0.2rem 0.5rem; border-radius: 100px;
+    }
+
+    .add-plant-card {
+      background:transparent;border:2px dashed var(--border);
+      border-radius:24px;padding:1.5rem;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;cursor:pointer;
+      transition:all 0.2s;min-height:240px;color:var(--text-muted);gap:0.5rem;
+    }
+    .add-plant-card:hover{border-color:var(--green-accent);background:rgba(76,175,80,0.04);color:var(--green-mid)}
+    .add-plant-card .plus{font-size:2rem}
+    .add-plant-card span{font-size:0.9rem;font-weight:500}
+
+    /* Empty state */
+    .empty-state {
+      grid-column: 1/-1; text-align: center; padding: 4rem 2rem;
+      display: flex; flex-direction: column; align-items: center; gap: 1rem;
+    }
+    .empty-state-emoji { font-size: 5rem; animation: sway 3s ease-in-out infinite; display: block; }
+    .empty-state h3 { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--green-deep); }
+    .empty-state p { color: var(--text-muted); max-width: 360px; line-height: 1.6; font-size: 0.95rem; }
+
+    /* Reminders */
+    .reminders-section{margin-top:3rem}
+    .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+    .section-header h2{font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--green-deep)}
+    .reminders-list{display:flex;flex-direction:column;gap:0.75rem}
+    .reminder-item {
+      background:var(--card-bg);border:1px solid var(--border);
+      border-radius:16px;padding:1rem 1.5rem;display:flex;
+      align-items:center;gap:1rem;box-shadow:0 2px 8px rgba(26,46,26,0.06);
+    }
+    .reminder-item.urgent{border-color:rgba(193,127,62,0.3);background:rgba(193,127,62,0.04)}
+    .reminder-emoji{font-size:1.8rem}
+    .reminder-info{flex:1}
+    .reminder-name{font-weight:500;font-size:0.95rem;color:var(--text-dark)}
+    .reminder-action{font-size:0.82rem;color:var(--text-muted);margin-top:0.15rem}
+    .reminder-time{font-size:0.8rem;font-weight:500;padding:0.25rem 0.75rem;border-radius:100px}
+    .reminder-time.today{background:rgba(193,127,62,0.12);color:var(--rust)}
+    .reminder-time.soon{background:rgba(76,175,80,0.12);color:var(--green-mid)}
+    .btn-done {
+      background:var(--green-mid);color:white;border:none;
+      width:32px;height:32px;border-radius:50%;font-size:0.9rem;
+      cursor:pointer;transition:background 0.2s,transform 0.1s;
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    }
+    .btn-done:hover{background:var(--green-deep);transform:scale(1.1)}
+
+    /* ── AI CHATBOT ── */
+    .chatbot-fab {
+      position: fixed; bottom: 2rem; right: 2rem; z-index: 150;
+      width: 60px; height: 60px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--green-mid), var(--green-accent));
+      color: white; border: none; font-size: 1.5rem;
+      cursor: pointer; box-shadow: 0 8px 24px rgba(45,90,39,0.4);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.2s;
+    }
+    .chatbot-fab:hover { transform: scale(1.1); }
+    .chatbot-panel {
+      position: fixed; bottom: 7rem; right: 2rem; z-index: 149;
+      width: 360px; max-height: 500px;
+      background: var(--cream); border: 1px solid var(--border);
+      border-radius: 24px; box-shadow: var(--shadow);
+      display: none; flex-direction: column; overflow: hidden;
+    }
+    .chatbot-panel.open { display: flex; }
+    .chatbot-header {
+      padding: 1rem 1.5rem; background: var(--green-mid); color: white;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .chatbot-header h3 { font-family: 'Playfair Display', serif; font-size: 1rem; }
+    .chatbot-header span { font-size: 0.78rem; opacity: 0.8; }
+    .chatbot-close { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
+    .chatbot-messages {
+      flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem;
+    }
+    .chat-msg {
+      max-width: 85%; padding: 0.6rem 1rem; border-radius: 16px; font-size: 0.85rem; line-height: 1.5;
+    }
+    .chat-msg.bot { background: var(--card-bg); border: 1px solid var(--border); color: var(--text-dark); align-self: flex-start; border-radius: 16px 16px 16px 4px; }
+    .chat-msg.user { background: var(--green-mid); color: white; align-self: flex-end; border-radius: 16px 16px 4px 16px; }
+    .chat-msg.thinking { opacity: 0.6; font-style: italic; }
+    .chatbot-input-row {
+      display: flex; gap: 0.5rem; padding: 1rem; border-top: 1px solid var(--border);
+    }
+    .chatbot-input {
+      flex: 1; padding: 0.6rem 1rem; border: 1.5px solid var(--border);
+      border-radius: 100px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+      background: var(--input-bg); color: var(--text-dark); outline: none;
+    }
+    .chatbot-input:focus { border-color: var(--green-accent); }
+    .chatbot-send {
+      background: var(--green-mid); color: white; border: none;
+      width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1rem;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .chat-suggestions {
+      display: flex; gap: 0.4rem; flex-wrap: wrap; padding: 0 1rem 0.5rem;
+    }
+    .chat-sug-btn {
+      background: rgba(76,175,80,0.1); color: var(--green-mid); border: 1px solid var(--border);
+      padding: 0.25rem 0.6rem; border-radius: 100px; font-size: 0.75rem; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+    }
+    .chat-sug-btn:hover { background: var(--green-mid); color: white; }
+
+    /* ── AI IDENTIFY PAGE ── */
+    .ai-wrap { max-width: 900px; margin: 0 auto; padding: 2.5rem 3rem; position: relative; z-index: 1; }
+    .ai-section {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 24px; padding: 2rem; box-shadow: var(--shadow); margin-bottom: 2rem;
+    }
+    .ai-section h2 { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--green-deep); margin-bottom: 0.5rem; }
+    .ai-section p { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+    .upload-zone {
+      border: 2px dashed var(--border); border-radius: 16px; padding: 2.5rem;
+      text-align: center; cursor: pointer; transition: all 0.2s; position: relative;
+    }
+    .upload-zone:hover, .upload-zone.dragover { border-color: var(--green-accent); background: rgba(76,175,80,0.04); }
+    .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+    .upload-zone-icon { font-size: 3rem; margin-bottom: 0.75rem; display: block; }
+    .upload-zone p { color: var(--text-muted); font-size: 0.9rem; margin: 0; }
+    .upload-preview {
+      display: none; margin-top: 1.5rem; border-radius: 16px; overflow: hidden;
+      max-height: 300px; position: relative;
+    }
+    .upload-preview img { width: 100%; object-fit: cover; max-height: 300px; }
+    .ai-result {
+      margin-top: 1.5rem; padding: 1.5rem; background: rgba(76,175,80,0.06);
+      border: 1px solid rgba(76,175,80,0.2); border-radius: 16px; display: none;
+    }
+    .ai-result-name { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--green-deep); margin-bottom: 0.5rem; }
+    .ai-result-desc { font-size: 0.88rem; color: var(--text-muted); line-height: 1.7; }
+    .ai-result-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+    .ai-tag {
+      background: rgba(76,175,80,0.12); color: var(--green-mid);
+      padding: 0.2rem 0.6rem; border-radius: 100px; font-size: 0.75rem; font-weight: 500;
+    }
+    .btn-ai {
+      background: linear-gradient(135deg, var(--green-mid), var(--green-accent));
+      color: white; border: none; padding: 0.75rem 1.75rem; border-radius: 100px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500;
+      cursor: pointer; transition: all 0.2s; margin-top: 1rem;
+    }
+    .btn-ai:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(45,90,39,0.3); }
+    .btn-ai:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .ai-loading { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--green-mid); font-size: 0.88rem; }
+    .ai-loading::before { content: ''; width: 16px; height: 16px; border: 2px solid var(--green-light); border-top-color: var(--green-mid); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── JOURNAL PAGE ── */
+    .journal-wrap { max-width: 900px; margin: 0 auto; padding: 2.5rem 3rem; position: relative; z-index: 1; }
+    .journal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+    .journal-entries { display: flex; flex-direction: column; gap: 1.5rem; }
+    .journal-entry {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 20px; padding: 1.5rem; box-shadow: var(--shadow);
+      display: flex; gap: 1.5rem; align-items: flex-start;
+    }
+    .journal-entry-photo {
+      width: 80px; height: 80px; border-radius: 12px; object-fit: cover; flex-shrink: 0;
+      background: var(--border); display: flex; align-items: center; justify-content: center; font-size: 2rem;
+    }
+    .journal-entry-img { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; flex-shrink: 0; }
+    .journal-entry-body { flex: 1; }
+    .journal-entry-plant { font-weight: 600; font-size: 0.95rem; color: var(--green-deep); margin-bottom: 0.3rem; }
+    .journal-entry-date { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .journal-entry-text { font-size: 0.88rem; color: var(--text-dark); line-height: 1.6; }
+    .journal-empty { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
+    .journal-empty span { font-size: 4rem; display: block; margin-bottom: 1rem; }
+
+    /* ── GAMIFICATION ── */
+    .gamification-bar {
+      background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,150,0,0.05));
+      border: 1px solid rgba(255,215,0,0.3); border-radius: 16px;
+      padding: 1rem 1.5rem; margin-bottom: 2rem;
+      display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+    }
+    .game-level {
+      background: linear-gradient(135deg, #ffd700, #ff9500);
+      color: white; width: 56px; height: 56px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .game-info { flex: 1; }
+    .game-title { font-weight: 600; font-size: 0.95rem; color: var(--text-dark); }
+    .game-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem; }
+    .game-xp-bar { height: 6px; background: var(--border); border-radius: 100px; margin-top: 0.5rem; overflow: hidden; }
+    .game-xp-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, #ffd700, #ff9500); }
+    .achievements { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .achievement {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 0.4rem 0.75rem;
+      font-size: 0.78rem; display: flex; align-items: center; gap: 0.3rem;
+    }
+    .achievement.locked { opacity: 0.4; filter: grayscale(1); }
+
+    /* ── SETTINGS PAGE ── */
+    .settings-wrap{max-width:900px;margin:0 auto;padding:2.5rem 3rem;position:relative;z-index:1}
+    .profile-header {
+      background:var(--green-deep);border-radius:24px;padding:2.5rem;
+      color:white;display:flex;align-items:center;gap:2rem;margin-bottom:2rem;
+      flex-wrap: wrap;
+    }
+    body.dark .profile-header { background: rgba(30,45,30,0.9); border: 1px solid var(--border); }
+    .avatar {
+      width:80px;height:80px;border-radius:50%;background:var(--green-light);
+      display:flex;align-items:center;justify-content:center;
+      font-size:2rem;border:3px solid rgba(255,255,255,0.2);flex-shrink:0;cursor:pointer;
+      transition: transform 0.2s;
+    }
+    .avatar:hover { transform: scale(1.05); }
+    .profile-info h2{font-family:'Playfair Display',serif;font-size:1.5rem}
+    .profile-info p{color:rgba(255,255,255,0.6);font-size:0.9rem;margin-top:0.3rem}
+    .profile-badge {
+      margin-top:0.75rem;background:rgba(168,213,162,0.2);color:var(--green-light);
+      padding:0.25rem 0.75rem;border-radius:100px;font-size:0.78rem;display:inline-block;
+    }
+    .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+    @media(max-width:600px){.settings-grid{grid-template-columns:1fr}}
+    .settings-card {
+      background:var(--card-bg);border:1px solid var(--border);
+      border-radius:20px;padding:1.5rem;box-shadow:var(--shadow);
+    }
+    .settings-card h3{font-family:'Playfair Display',serif;font-size:1rem;color:var(--green-deep);margin-bottom:1rem}
+    .toggle-row {
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0.6rem 0;border-bottom:1px solid var(--border);
+    }
+    .toggle-row:last-child{border-bottom:none}
+    .toggle-label{font-size:0.88rem;color:var(--text-dark)}
+    .toggle {
+      width:44px;height:24px;background:rgba(168,213,162,0.3);
+      border-radius:100px;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;
+    }
+    .toggle.on{background:var(--green-mid)}
+    .toggle::after {
+      content:'';position:absolute;top:2px;left:2px;
+      width:20px;height:20px;background:white;border-radius:50%;
+      transition:transform 0.2s;box-shadow:0 1px 4px rgba(0,0,0,0.2);
+    }
+    .toggle.on::after{transform:translateX(20px)}
+    .form-group{margin-bottom:0.8rem}
+    .form-group label{
+      display:block;font-size:0.83rem;font-weight:500;color:var(--text-muted);
+      margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.06em;
+    }
+    .form-group input,.form-group select {
+      width:100%;padding:0.75rem 1rem;border:1.5px solid var(--border);
+      border-radius:12px;font-family:'DM Sans',sans-serif;font-size:0.95rem;
+      background:var(--card-bg);color:var(--text-dark);outline:none;transition:border-color 0.2s;
+    }
+    .form-group input:focus,.form-group select:focus{border-color:var(--green-accent)}
+    .stat-row{display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0;border-bottom:1px solid var(--border)}
+    .stat-row:last-child{border-bottom:none}
+    .stat-row-label{font-size:0.88rem;color:var(--text-muted)}
+    .btn-settings {
+      width: 100%; padding: 0.75rem; border-radius: 12px; font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; border: none; margin-top: 0.5rem;
+    }
+    .btn-settings.primary { background: var(--green-mid); color: white; }
+    .btn-settings.primary:hover { background: var(--green-deep); }
+    .btn-settings.secondary { background: transparent; border: 1.5px solid var(--border); color: var(--text-muted); }
+    .btn-settings.secondary:hover { border-color: var(--green-accent); color: var(--green-mid); }
+
+    /* ── MODALS ── */
+    .modal-overlay {
+      display:none;position:fixed;inset:0;
+      background:rgba(26,46,26,0.5);backdrop-filter:blur(4px);
+      z-index:200;align-items:center;justify-content:center;
+    }
+    .modal-overlay.active{display:flex}
+    .modal {
+      background:var(--cream);border-radius:28px;padding:2.5rem;
+      width:90%;max-width:480px;box-shadow:0 24px 64px rgba(26,46,26,0.25);
+      animation:modalIn 0.3s ease;max-height:90vh;overflow-y:auto;
+    }
+    @keyframes modalIn{from{opacity:0;transform:translateY(20px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+    .modal h2{font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--green-deep);margin-bottom:1.5rem}
+    .form-group-modal{margin-bottom:1.2rem}
+    .form-group-modal label{
+      display:block;font-size:0.83rem;font-weight:500;color:var(--text-muted);
+      margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.06em;
+    }
+    .form-group-modal input,.form-group-modal select,.form-group-modal textarea{
+      width:100%;padding:0.75rem 1rem;border:1.5px solid var(--border);
+      border-radius:12px;font-family:'DM Sans',sans-serif;font-size:0.95rem;
+      background:var(--input-bg);color:var(--text-dark);outline:none;transition:border-color 0.2s;
+    }
+    .form-group-modal textarea { resize: vertical; min-height: 80px; }
+    .form-group-modal input:focus,.form-group-modal select:focus,.form-group-modal textarea:focus{border-color:var(--green-accent)}
+    .emoji-picker{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem}
+    .emoji-option{
+      font-size:1.8rem;cursor:pointer;padding:0.4rem;border-radius:10px;
+      border:2px solid transparent;transition:border-color 0.15s;
+    }
+    .emoji-option:hover,.emoji-option.selected{border-color:var(--green-accent);background:rgba(76,175,80,0.08)}
+    .modal-actions{display:flex;gap:0.75rem;margin-top:2rem;flex-wrap:wrap}
+    .btn-cancel{
+      flex:1;background:transparent;border:1.5px solid var(--border);
+      color:var(--text-muted);padding:0.75rem;border-radius:100px;
+      font-family:'DM Sans',sans-serif;font-size:0.9rem;cursor:pointer;transition:all 0.2s;
+      min-width: 80px;
+    }
+    .btn-cancel:hover{border-color:var(--green-accent);color:var(--green-mid)}
+    .btn-save{
+      flex:2;background:var(--green-mid);color:white;border:none;
+      padding:0.75rem;border-radius:100px;font-family:'DM Sans',sans-serif;
+      font-size:0.9rem;font-weight:500;cursor:pointer;transition:all 0.2s;
+    }
+    .btn-save:hover{background:var(--green-deep)}
+    .btn-danger {
+      flex:1;background:transparent;border:1.5px solid rgba(220,53,69,0.4);
+      color:#dc3545;padding:0.75rem;border-radius:100px;
+      font-family:'DM Sans',sans-serif;font-size:0.9rem;cursor:pointer;transition:all 0.2s;
+      min-width: 80px;
+    }
+    .btn-danger:hover{background:rgba(220,53,69,0.08)}
+
+    /* Plant detail modal */
+    .detail-modal { max-width: 540px; }
+    .detail-header {
+      display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem; border-bottom: 1px solid var(--border);
+    }
+    .detail-emoji { font-size: 4rem; }
+    .detail-title h2 { font-family:'Playfair Display',serif; font-size:1.6rem; color:var(--green-deep); margin-bottom:0; }
+    .detail-title p { color:var(--text-muted); font-size:0.88rem; margin-top:0.3rem; }
+    .detail-stats {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .detail-stat {
+      background: rgba(168,213,162,0.12); border-radius: 14px; padding: 0.9rem;
+      text-align: center;
+    }
+    .detail-stat-val { font-family:'Playfair Display',serif; font-size:1.4rem; color:var(--green-mid); }
+    .detail-stat-label { font-size:0.72rem; color:var(--text-muted); margin-top:0.2rem; text-transform:uppercase; letter-spacing:0.06em; }
+    .detail-section-title { font-weight: 500; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 0.75rem; }
+    .history-list { display: flex; flex-direction: column; gap: 0.4rem; max-height: 160px; overflow-y: auto; }
+    .history-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      font-size: 0.85rem; color: var(--text-muted); padding: 0.4rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .history-item:last-child { border-bottom: none; }
+    .history-icon { font-size: 1rem; }
+
+    /* Diagnosis result */
+    .diagnosis-result {
+      margin-top: 1rem; padding: 1rem; border-radius: 12px;
+      background: rgba(193,127,62,0.08); border: 1px solid rgba(193,127,62,0.2);
+      display: none;
+    }
+    .diagnosis-result.healthy { background: rgba(76,175,80,0.08); border-color: rgba(76,175,80,0.2); }
+
+    /* Journal add modal */
+    .journal-modal { max-width: 520px; }
+
+    /* Onboarding overlay */
+    .onboarding-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(26,46,26,0.7); backdrop-filter: blur(6px);
+      z-index: 300; align-items: center; justify-content: center;
+    }
+    .onboarding-overlay.active { display: flex; }
+    .onboarding-modal {
+      background: var(--cream); border-radius: 28px; padding: 3rem;
+      width: 90%; max-width: 520px; animation: modalIn 0.4s ease;
+      text-align: center;
+    }
+    .onboarding-step { display: none; }
+    .onboarding-step.active { display: block; }
+    .onboarding-emoji { font-size: 4rem; margin-bottom: 1rem; display: block; }
+    .onboarding-modal h2 { font-family:'Playfair Display',serif; font-size:1.8rem; color:var(--green-deep); margin-bottom:0.75rem; }
+    .onboarding-modal p { color:var(--text-muted); line-height:1.7; margin-bottom:2rem; }
+    .onboarding-dots { display:flex; justify-content:center; gap:0.4rem; margin-bottom:1.5rem; }
+    .onboarding-dot { width:8px; height:8px; border-radius:50%; background:var(--border); transition:background 0.2s; }
+    .onboarding-dot.active { background:var(--green-mid); }
+    .onboarding-actions { display:flex; gap:0.75rem; justify-content:center; }
+
+    /* Smart watering suggestion banner */
+    .weather-tip {
+      background: rgba(76,175,80,0.07); border: 1px solid rgba(76,175,80,0.2);
+      border-radius: 14px; padding: 0.75rem 1.25rem; margin-bottom: 1.5rem;
+      display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem;
+    }
+    .weather-tip-icon { font-size: 1.3rem; }
+    .weather-tip-text { color: var(--text-muted); }
+    .weather-tip-text strong { color: var(--green-mid); }
+
+    /* ── TOAST ── */
+    .toast {
+      position:fixed;bottom:2rem;left:50%;
+      transform:translateX(-50%) translateY(100px);
+      background:var(--green-deep);color:white;
+      padding:0.75rem 1.5rem;border-radius:100px;font-size:0.88rem;
+      z-index:400;transition:transform 0.3s ease;
+      box-shadow:0 8px 24px rgba(26,46,26,0.4);white-space:nowrap;
+    }
+    .toast.show{transform:translateX(-50%) translateY(0)}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .fade-in{animation:fadeUp 0.5s ease both}
+
+    footer {
+      text-align:center;padding:2rem;color:var(--text-muted);font-size:0.82rem;
+      border-top:1px solid var(--border);margin-top:4rem;position:relative;z-index:1;
+    }
+    footer a { color:var(--text-muted); margin:0 0.5rem; text-decoration:none; cursor:pointer; }
+    footer a:hover { color:var(--green-mid); }
+
+    /* Privacy Policy page */
+    .policy-wrap { max-width:800px; margin:0 auto; padding:3rem; position:relative; z-index:1; }
+    .policy-wrap h1 { font-family:'Playfair Display',serif; color:var(--green-deep); margin-bottom:1rem; }
+    .policy-wrap h3 { font-family:'Playfair Display',serif; color:var(--green-deep); margin:2rem 0 0.5rem; }
+    .policy-wrap p { color:var(--text-muted); line-height:1.8; margin-bottom:1rem; }
+
+    /* Mobile responsive */
+    @media(max-width:600px) {
+      .hero { padding:3rem 1.5rem; }
+      .dashboard-wrap { padding:1.5rem; }
+      .settings-wrap { padding:1.5rem; }
+      .ai-wrap { padding:1.5rem; }
+      .journal-wrap { padding:1.5rem; }
+      nav ul { gap:0.75rem; }
+      nav ul li a { font-size: 0.82rem; }
+      .chatbot-panel { width: calc(100vw - 2rem); right: 1rem; bottom: 6rem; }
+    }
+    @media(max-width:480px) {
+      nav ul { display: none; }
+      .nav-streak { display: none; }
+    }
+
+    /* ── AUTH OVERLAY ── */
+    .auth-overlay {
+      display:none; position:fixed; inset:0;
+      background:rgba(10,20,10,0.85); backdrop-filter:blur(10px);
+      z-index:500; align-items:center; justify-content:center;
+    }
+    .auth-overlay.active { display:flex; }
+    .auth-box {
+      background:var(--cream); border-radius:32px; padding:2.8rem;
+      width:90%; max-width:420px; box-shadow:0 32px 80px rgba(0,0,0,0.3);
+      animation:modalIn 0.35s ease;
+    }
+    .auth-logo { text-align:center; margin-bottom:1.8rem; }
+    .auth-logo span { font-size:3rem; display:block; margin-bottom:0.5rem; animation:sway 3s ease-in-out infinite; display:inline-block; }
+    .auth-logo h2 { font-family:'Playfair Display',serif; font-size:2rem; color:var(--green-deep); }
+    .auth-logo p { color:var(--text-muted); font-size:0.88rem; margin-top:0.3rem; }
+    .auth-tabs { display:flex; border:1.5px solid var(--border); border-radius:14px; overflow:hidden; margin-bottom:1.8rem; }
+    .auth-tab { flex:1; padding:0.65rem; text-align:center; font-size:0.88rem; font-weight:600; cursor:pointer; transition:all 0.2s; color:var(--text-muted); background:transparent; border:none; font-family:'DM Sans',sans-serif; }
+    .auth-tab.active { background:var(--green-mid); color:white; }
+    .auth-form { display:none; }
+    .auth-form.active { display:block; }
+    .auth-field { margin-bottom:1rem; }
+    .auth-field label { display:block; font-size:0.78rem; font-weight:600; color:var(--text-muted); margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.07em; }
+    .auth-field input { width:100%; padding:0.8rem 1rem; border:1.5px solid var(--border); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:0.95rem; background:var(--input-bg); color:var(--text-dark); outline:none; transition:border-color 0.2s; }
+    .auth-field input:focus { border-color:var(--green-accent); }
+    .auth-btn { width:100%; padding:0.9rem; border-radius:14px; border:none; background:var(--green-mid); color:white; font-family:'DM Sans',sans-serif; font-size:1rem; font-weight:600; cursor:pointer; transition:all 0.2s; margin-top:0.5rem; box-shadow:0 4px 16px rgba(45,90,39,0.25); }
+    .auth-btn:hover { background:var(--green-deep); transform:translateY(-1px); }
+    .auth-error { color:#e53e3e; font-size:0.82rem; margin-top:0.5rem; padding:0.5rem 0.75rem; background:rgba(229,62,62,0.08); border-radius:8px; display:none; }
+    .auth-error.show { display:block; }
+    .auth-footer { text-align:center; font-size:0.8rem; color:var(--text-muted); margin-top:1.2rem; }
+
+    /* ── NAV USER PILL ── */
+    .nav-user { display:flex; align-items:center; gap:0.5rem; background:var(--card-bg); border:1px solid var(--border); border-radius:100px; padding:0.3rem 0.75rem 0.3rem 0.4rem; cursor:pointer; font-size:0.82rem; font-weight:500; color:var(--text-dark); transition:all 0.2s; }
+    .nav-user:hover { border-color:var(--green-accent); }
+    .nav-user-avatar { width:26px; height:26px; border-radius:50%; background:var(--green-mid); display:flex; align-items:center; justify-content:center; font-size:0.75rem; }
+
+    /* ── IN-APP EMAIL NOTIFICATION ── */
+    .email-notif {
+      position:fixed; top:80px; right:1.5rem; z-index:300;
+      background:var(--card-bg); border:1px solid rgba(76,175,80,0.3);
+      border-radius:20px; padding:1.2rem 1.5rem; max-width:340px;
+      box-shadow:0 12px 40px rgba(26,46,26,0.18); transform:translateX(120%);
+      transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .email-notif.show { transform:translateX(0); }
+    .email-notif-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem; }
+    .email-notif-title { font-weight:600; font-size:0.9rem; color:var(--green-deep); display:flex; align-items:center; gap:0.4rem; }
+    .email-notif-close { background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:1rem; padding:0; }
+    .email-notif-body { font-size:0.82rem; color:var(--text-muted); line-height:1.6; }
+    .email-notif-plants { margin-top:0.75rem; display:flex; flex-direction:column; gap:0.3rem; }
+    .email-notif-plant { display:flex; align-items:center; justify-content:space-between; font-size:0.8rem; padding:0.3rem 0.5rem; border-radius:8px; background:rgba(168,213,162,0.12); }
+    .email-notif-plant-name { font-weight:500; color:var(--text-dark); }
+    .email-notif-plant-status { font-size:0.75rem; }
+    .email-notif-actions { display:flex; gap:0.5rem; margin-top:0.9rem; }
+    .email-notif-btn { flex:1; padding:0.5rem; border-radius:10px; border:none; font-family:'DM Sans',sans-serif; font-size:0.8rem; font-weight:500; cursor:pointer; transition:all 0.2s; }
+    .email-notif-btn.primary { background:var(--green-mid); color:white; }
+    .email-notif-btn.secondary { background:var(--border); color:var(--text-muted); }
+  </style>
+</head>
+<body>
+
+<!-- ══════════ AUTH OVERLAY ══════════ -->
+<div class="auth-overlay active" id="auth-overlay">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <span>🌿</span>
+      <h2>Leafy</h2>
+      <p>Your AI plant care companion</p>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Create Account</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div class="auth-form active" id="form-login">
+      <div class="auth-field">
+        <label>Email Address</label>
+        <input type="email" id="login-email" placeholder="you@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="auth-field">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="auth-error" id="login-error"></div>
+      <button class="auth-btn" onclick="doLogin()">Sign In →</button>
+      <div style="text-align:center;margin:0.75rem 0;color:var(--text-muted);font-size:0.8rem">— or —</div>
+      <button class="auth-btn" onclick="doGuest()" style="background:transparent;border:1.5px solid var(--green-mid);color:var(--green-mid)">Continue as Guest 🌱</button>
+      <div class="auth-footer" style="margin-top:0.75rem">Don't have an account? <a href="#" onclick="switchAuthTab('register')" style="color:var(--green-mid);font-weight:600">Create one free</a></div>
+      <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.75rem;text-align:center;line-height:1.4;background:rgba(168,213,162,0.1);padding:0.5rem;border-radius:8px;">ℹ️ Accounts are saved in <strong>this browser only</strong>. If you used a different browser or cleared data, please create a new account.</div>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div class="auth-form" id="form-register">
+      <div class="auth-field">
+        <label>Your Name</label>
+        <input type="text" id="reg-name" placeholder="Plant Parent" onkeydown="if(event.key==='Enter')doRegister()">
+      </div>
+      <div class="auth-field">
+        <label>Email Address</label>
+        <input type="email" id="reg-email" placeholder="you@email.com" onkeydown="if(event.key==='Enter')doRegister()">
+      </div>
+      <div class="auth-field">
+        <label>Password</label>
+        <input type="password" id="reg-password" placeholder="At least 6 characters" onkeydown="if(event.key==='Enter')doRegister()">
+      </div>
+      <div class="auth-error" id="reg-error"></div>
+      <button class="auth-btn" onclick="doRegister()">Create Account & Get Started 🌱</button>
+      <div style="text-align:center;margin:0.75rem 0;color:var(--text-muted);font-size:0.8rem">— or —</div>
+      <button class="auth-btn" onclick="doGuest()" style="background:transparent;border:1.5px solid var(--green-mid);color:var(--green-mid)">Continue as Guest 🌱</button>
+      <div class="auth-footer" style="margin-top:0.75rem">Already have an account? <a href="#" onclick="switchAuthTab('login')" style="color:var(--green-mid);font-weight:600">Sign in</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ EMAIL NOTIFICATION PANEL ══════════ -->
+<div class="email-notif" id="email-notif">
+  <div class="email-notif-header">
+    <div class="email-notif-title">📧 Plant Care Summary</div>
+    <button class="email-notif-close" onclick="closeEmailNotif()">✕</button>
+  </div>
+  <div class="email-notif-body" id="email-notif-body">Your garden update is ready.</div>
+  <div class="email-notif-plants" id="email-notif-plants"></div>
+  <div class="email-notif-actions">
+    <button class="email-notif-btn primary" id="email-notif-send-btn" onclick="sendEmailViaMailto()">📧 Send to My Email</button>
+    <button class="email-notif-btn secondary" onclick="closeEmailNotif()">Dismiss</button>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a class="logo" onclick="showPage('home')">
+    <span class="logo-leaf">🌿</span> Leafy
+  </a>
+  <ul>
+    <li><a id="nav-home" class="active" onclick="showPage('home')">Home</a></li>
+    <li><a id="nav-dashboard" onclick="showPage('dashboard')">My Plants</a></li>
+    <li><a id="nav-ai" onclick="showPage('ai')">AI Tools</a></li>
+    <li><a id="nav-journal" onclick="showPage('journal')">Journal</a></li>
+    <li><a id="nav-settings" onclick="showPage('settings')">Settings</a></li>
+  </ul>
+  <div class="nav-right">
+    <div class="nav-streak" id="streak-badge">🔥 0d</div>
+    <button class="dark-toggle" onclick="toggleDark()" title="Toggle dark mode" id="dark-btn">🌙</button>
+    <div class="nav-user" id="nav-user" onclick="showPage('settings')" style="display:none">
+      <div class="nav-user-avatar" id="nav-user-avatar">🌿</div>
+      <span id="nav-user-name">You</span>
+    </div>
+    <button class="btn-nav" id="nav-logout-btn" onclick="doLogout()" style="display:none;background:#c17f3e">Sign Out</button>
+    <button class="btn-nav" id="nav-login-btn" onclick="document.getElementById('auth-overlay').classList.add('active')">Sign In</button>
+  </div>
+</nav>
+
+<!-- TOAST -->
+<div class="toast" id="toast">Done!</div>
+
+<!-- AI CHATBOT FAB -->
+<button class="chatbot-fab" onclick="toggleChatbot()" title="AI Plant Assistant" id="chatbot-fab">🤖</button>
+<div class="chatbot-panel" id="chatbot-panel">
+  <div class="chatbot-header">
+    <div><h3>🌿 Leafy AI Assistant</h3><span>Ask anything about your plants</span></div>
+    <button class="chatbot-close" onclick="toggleChatbot()">✕</button>
+  </div>
+  <div class="chatbot-messages" id="chatbot-messages">
+    <div class="chat-msg bot">Hi! I'm your AI plant expert 🌱 Ask me anything — why leaves turn yellow, best watering tips, plant identification, and more!</div>
+  </div>
+  <div class="chat-suggestions" id="chat-suggestions">
+    <button class="chat-sug-btn" onclick="sendChatSuggestion('Why are my leaves turning yellow?')">Yellow leaves?</button>
+    <button class="chat-sug-btn" onclick="sendChatSuggestion('How often should I water a monstera?')">Monstera care</button>
+    <button class="chat-sug-btn" onclick="sendChatSuggestion('Signs of overwatering?')">Overwatering?</button>
+  </div>
+  <div class="chatbot-input-row">
+    <input class="chatbot-input" id="chatbot-input" placeholder="Ask about your plants…" onkeydown="if(event.key==='Enter')sendChat()">
+    <button class="chatbot-send" onclick="sendChat()">➤</button>
+  </div>
+</div>
+
+<!-- ONBOARDING -->
+<div class="onboarding-overlay" id="onboarding-overlay">
+  <div class="onboarding-modal">
+    <div class="onboarding-step active" id="ob-step-1">
+      <span class="onboarding-emoji">🌱</span>
+      <h2>Welcome to Leafy!</h2>
+      <p>Your intelligent plant care companion. Track, diagnose, and grow your garden with AI-powered insights.</p>
+    </div>
+    <div class="onboarding-step" id="ob-step-2">
+      <span class="onboarding-emoji">💧</span>
+      <h2>Never Miss a Watering</h2>
+      <p>Leafy tracks every plant's schedule and sends you smart reminders. Your plants will love you for it.</p>
+    </div>
+    <div class="onboarding-step" id="ob-step-3">
+      <span class="onboarding-emoji">🤖</span>
+      <h2>AI-Powered Care</h2>
+      <p>Upload a photo to identify plants, diagnose diseases, and chat with our AI assistant for expert advice.</p>
+    </div>
+    <div class="onboarding-dots">
+      <div class="onboarding-dot active" id="ob-dot-1"></div>
+      <div class="onboarding-dot" id="ob-dot-2"></div>
+      <div class="onboarding-dot" id="ob-dot-3"></div>
+    </div>
+    <div class="onboarding-actions">
+      <button class="btn-cancel" id="ob-skip" onclick="finishOnboarding()">Skip</button>
+      <button class="btn-save" id="ob-next" onclick="nextOnboardingStep()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ HOME PAGE ══════════ -->
+<div id="page-home" class="page active">
+  <div class="hero">
+    <div class="hero-tag">🌱 AI-Powered Plant Companion</div>
+    <h1>Your plants deserve <em>smarter</em> care.</h1>
+    <p>Leafy tracks watering schedules, identifies plants from photos, diagnoses diseases with AI, and keeps your whole garden thriving beautifully.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="showPage('dashboard')">Start Tracking →</button>
+      <button class="btn-secondary" onclick="showPage('ai')">Try AI Tools ✨</button>
+    </div>
+    <div class="hero-visual">
+      <div class="float-card">
+        <div class="plant-emoji">🪴</div>
+        <div class="plant-name">Monstera</div>
+        <div class="plant-status">Living room</div>
+        <div class="water-badge">💧 Water tomorrow</div>
+      </div>
+      <div class="float-card">
+        <div class="plant-emoji">🌵</div>
+        <div class="plant-name">Cactus Pete</div>
+        <div class="plant-status">Windowsill</div>
+        <div class="water-badge">✅ All good</div>
+      </div>
+      <div class="float-card">
+        <div class="plant-emoji">🌸</div>
+        <div class="plant-name">Orchid</div>
+        <div class="plant-status">Bedroom</div>
+        <div class="water-badge overdue">⚠️ Overdue!</div>
+      </div>
+      <div class="float-card">
+        <div class="plant-emoji">🌿</div>
+        <div class="plant-name">Pothos</div>
+        <div class="plant-status">Kitchen</div>
+        <div class="water-badge">💧 In 3 days</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-num">2,400+</div><div class="stat-label">Plants tracked</div></div>
+    <div class="stat"><div class="stat-num">98%</div><div class="stat-label">On-time reminders</div></div>
+    <div class="stat"><div class="stat-num">12k+</div><div class="stat-label">Happy plant parents</div></div>
+  </div>
+
+  <div class="features-section" id="features">
+    <div class="section-title">Everything your plants need</div>
+    <div class="section-sub">Powered by AI. Built for plant lovers.</div>
+    <div class="features-grid">
+      <div class="feature-card"><div class="feature-badge">AI</div><span class="feature-icon">🔍</span><h3>Plant Identification</h3><p>Upload a photo and instantly detect the plant name, species info, and care tips using AI vision.</p></div>
+      <div class="feature-card"><div class="feature-badge">AI</div><span class="feature-icon">🩺</span><h3>Health Diagnosis</h3><p>Detect diseases from images — yellow leaves, pests, root rot, overwatering — before it's too late.</p></div>
+      <div class="feature-card"><div class="feature-badge">AI</div><span class="feature-icon">🤖</span><h3>AI Chatbot</h3><p>Ask your plant questions any time. Get expert advice like "Why are my leaves turning brown?"</p></div>
+      <div class="feature-card"><span class="feature-icon">💧</span><h3>Smart Schedules</h3><p>Watering adjusted based on season, humidity, and weather. Your plants get the right amount every time.</p></div>
+      <div class="feature-card"><span class="feature-icon">📔</span><h3>Plant Journal</h3><p>Track growth with photos, notes, and history. A beautiful diary for every plant in your collection.</p></div>
+      <div class="feature-card"><span class="feature-icon">🏡</span><h3>Room Organization</h3><p>Group plants by location — balcony, bedroom, kitchen, garden. Filter and manage your whole home.</p></div>
+      <div class="feature-card"><span class="feature-icon">🏆</span><h3>Gamification</h3><p>Earn streaks, level up, unlock achievements. Stay motivated and make plant care a daily habit.</p></div>
+      <div class="feature-card"><span class="feature-icon">📊</span><h3>Today Dashboard</h3><p>See plants needing water today, overdue tasks, and stats at a glance every morning.</p></div>
+      <div class="feature-card"><span class="feature-icon">🔔</span><h3>Smart Alerts</h3><p>Multi-channel reminders with snooze, repeat, and priority ordering. Never miss a watering again.</p></div>
+    </div>
+  </div>
+  <footer>
+    🌿 Leafy — Built with Vercel, AWS Lambda + SES, and MongoDB. &nbsp;|&nbsp; Made with love for plant parents.
+    <br><br>
+    <a onclick="showPage('privacy')">Privacy Policy</a> · <a onclick="showPage('privacy')">Terms of Service</a>
+  </footer>
+</div>
+
+<!-- ══════════ DASHBOARD PAGE ══════════ -->
+<div id="page-dashboard" class="page">
+  <div class="dashboard-wrap">
+    <div class="dashboard-header">
+      <div>
+        <div class="greeting">Good <span id="greeting-time">morning</span>, <span id="greeting-name">Plant Parent 🌿</span></div>
+        <div class="greeting-sub" id="reminder-count">Loading your plants...</div>
+      </div>
+      <div class="dashboard-actions">
+        <button class="btn-secondary" onclick="openJournalAddModal()" style="padding:0.6rem 1.2rem;font-size:0.88rem">📔 Log</button>
+        <button class="btn-primary" onclick="openModal()">+ Add Plant</button>
+      </div>
+    </div>
+
+    <!-- Today View Stats -->
+    <div class="today-stats" id="today-stats"></div>
+
+    <!-- Smart Watering Tip -->
+    <div class="weather-tip" id="weather-tip" style="display:none">
+      <span class="weather-tip-icon">🌤️</span>
+      <span class="weather-tip-text" id="weather-tip-text"></span>
+    </div>
+
+    <!-- Gamification bar -->
+    <div class="gamification-bar" id="gamification-bar">
+      <div class="game-level" id="game-level">1</div>
+      <div class="game-info">
+        <div class="game-title" id="game-title">Seedling</div>
+        <div class="game-sub" id="game-sub">0 XP · Water 3 plants to level up</div>
+        <div class="game-xp-bar"><div class="game-xp-fill" id="game-xp-fill" style="width:0%"></div></div>
+      </div>
+      <div class="achievements" id="achievements-row"></div>
+    </div>
+
+    <!-- Overdue banner -->
+    <div id="overdue-banner" style="display:none" class="overdue-banner">
+      <div class="overdue-banner-icon">⚠️</div>
+      <div class="overdue-banner-text">
+        <div class="overdue-banner-title" id="overdue-title">Plants need attention!</div>
+        <div class="overdue-banner-sub" id="overdue-sub"></div>
+      </div>
+    </div>
+
+    <!-- Room filter tabs -->
+    <div class="room-tabs" id="room-tabs"></div>
+
+    <div class="plants-grid" id="plants-grid"></div>
+
+    <div class="reminders-section">
+      <div class="section-header">
+        <h2>Upcoming Care</h2>
+      </div>
+      <div class="reminders-list" id="reminders-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ AI TOOLS PAGE ══════════ -->
+<div id="page-ai" class="page">
+  <div class="ai-wrap">
+    <h1 style="font-family:'Playfair Display',serif;font-size:2rem;color:var(--green-deep);margin-bottom:0.5rem">AI Plant Tools ✨</h1>
+    <p style="color:var(--text-muted);margin-bottom:2rem">Powered by Claude AI — identify plants, diagnose health issues, and get expert care advice.</p>
+
+    <!-- Plant Identification -->
+    <div class="ai-section">
+      <h2>🔍 Plant Identification</h2>
+      <p>Upload a photo and AI will detect the plant name, care requirements, and tips.</p>
+      <div class="upload-zone" id="identify-zone" onclick="document.getElementById('identify-input').click()">
+        <input type="file" id="identify-input" accept="image/*" onchange="handleIdentifyUpload(event)">
+        <span class="upload-zone-icon">📷</span>
+        <p>Tap to upload a plant photo</p>
+        <p style="font-size:0.78rem;margin-top:0.3rem;opacity:0.6">JPG, PNG supported</p>
+      </div>
+      <div class="upload-preview" id="identify-preview">
+        <img id="identify-img" src="" alt="Plant photo">
+      </div>
+      <div id="identify-result" class="ai-result"></div>
+      <button class="btn-ai" id="identify-btn" onclick="identifyPlant()" style="display:none">Identify Plant ✨</button>
+    </div>
+
+    <!-- Health Diagnosis -->
+    <div class="ai-section">
+      <h2>🩺 Health Diagnosis</h2>
+      <p>Upload a photo showing your plant's symptoms. AI will detect diseases, pests, or care issues.</p>
+      <div class="upload-zone" id="diagnose-zone" onclick="document.getElementById('diagnose-input').click()">
+        <input type="file" id="diagnose-input" accept="image/*" onchange="handleDiagnoseUpload(event)">
+        <span class="upload-zone-icon">🌿</span>
+        <p>Upload a photo of the affected area</p>
+        <p style="font-size:0.78rem;margin-top:0.3rem;opacity:0.6">Show leaves, stems, or roots clearly</p>
+      </div>
+      <div class="upload-preview" id="diagnose-preview">
+        <img id="diagnose-img" src="" alt="Plant diagnosis photo">
+      </div>
+      <div id="diagnose-result" class="ai-result"></div>
+      <button class="btn-ai" id="diagnose-btn" onclick="diagnosePlant()" style="display:none">Diagnose Health 🩺</button>
+    </div>
+
+    <!-- Smart Watering Suggestions -->
+    <div class="ai-section">
+      <h2>💧 Smart Watering Suggestions</h2>
+      <p>Describe your plant and environment, and AI will suggest the optimal watering schedule.</p>
+      <div class="form-group-modal" style="margin-bottom:1rem">
+        <label>Plant type & location</label>
+        <input type="text" id="watering-plant" placeholder="e.g. Monstera in a humid indoor room, 22°C">
+      </div>
+      <button class="btn-ai" onclick="getWateringSuggestion()">Get Smart Schedule 💧</button>
+      <div id="watering-result" class="ai-result"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ JOURNAL PAGE ══════════ -->
+<div id="page-journal" class="page">
+  <div class="journal-wrap">
+    <div class="journal-header">
+      <div>
+        <h1 style="font-family:'Playfair Display',serif;font-size:2rem;color:var(--green-deep)">Plant Journal 📔</h1>
+        <p style="color:var(--text-muted);margin-top:0.3rem">Track your plants' growth with photos and notes</p>
+      </div>
+      <button class="btn-primary" onclick="openJournalAddModal()">+ New Entry</button>
+    </div>
+    <div class="journal-entries" id="journal-entries"></div>
+  </div>
+</div>
+
+<!-- ══════════ SETTINGS PAGE ══════════ -->
+<div id="page-settings" class="page">
+  <div class="settings-wrap">
+    <div class="profile-header">
+      <div class="avatar" onclick="changeAvatar()" id="avatar-display" title="Tap to change avatar">🌿</div>
+      <div class="profile-info">
+        <h2 id="profile-name">Plant Parent</h2>
+        <p>🌱 Plant enthusiast &amp; green thumb</p>
+        <div class="profile-badge" id="profile-badge">Seedling · Level 1</div>
+      </div>
+    </div>
+
+    <div class="settings-grid">
+      <div class="settings-card">
+        <h3>👤 Profile</h3>
+        <div class="form-group">
+          <label>Your Name</label>
+          <input type="text" id="user-name-input" placeholder="Plant Parent">
+        </div>
+        <div class="form-group">
+          <label>Email (your account email)</label>
+          <input type="email" id="user-email-input" placeholder="you@email.com" readonly style="opacity:0.7;cursor:not-allowed">
+        </div>
+        <button class="btn-settings primary" onclick="saveSettings()">Save Profile</button>
+        <button class="btn-settings secondary" style="margin-top:0.5rem" onclick="showEmailSummary()">📧 Get Plant Summary Email</button>
+      </div>
+
+      <div class="settings-card">
+        <h3>🤖 AI Tools</h3>
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem;line-height:1.5">✅ <strong>AI Chatbot & Smart Watering work for free — no key needed!</strong></p>
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5">📸 For <strong>Plant Identification & Health Diagnosis</strong> (photo features), add a free Google Gemini key below. It's 100% free — no credit card required.</p>
+        <div class="form-group">
+          <label>Google Gemini API Key (free)</label>
+          <input type="password" id="anthropic-key-input" placeholder="AIzaSy...">
+        </div>
+        <button class="btn-settings primary" onclick="saveApiKey()">Save Key 🔑</button>
+        <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.75rem;line-height:1.6">
+          Get your <strong>free</strong> Gemini key at <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--green-mid);font-weight:600">aistudio.google.com</a><br>
+          Sign in with Google → "Create API key" → Copy & paste here.
+        </p>
+      </div>
+
+      <div class="settings-card">
+        <h3>🔔 Notifications</h3>
+        <div class="toggle-row">
+          <span class="toggle-label">Email reminders</span>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Push notifications</span>
+          <div class="toggle" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Overdue alerts</span>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Weekly summary</span>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Smart reminders (AI)</span>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <h3>📊 My Stats</h3>
+        <div class="stat-row">
+          <span class="stat-row-label">Total plants</span>
+          <span id="stat-plants" style="font-weight:600;color:var(--green-mid)">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-row-label">Total waterings</span>
+          <span id="stat-waterings" style="font-weight:600;color:var(--green-mid)">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-row-label">Current streak</span>
+          <span id="stat-streak" style="font-weight:600;color:#ff9500">0 days 🔥</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-row-label">Journal entries</span>
+          <span id="stat-journal" style="font-weight:600;color:var(--green-mid)">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-row-label">AI queries used</span>
+          <span id="stat-ai" style="font-weight:600;color:var(--green-mid)">0</span>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <h3>🎨 Appearance</h3>
+        <div class="toggle-row">
+          <span class="toggle-label">Dark mode</span>
+          <div class="toggle" id="dark-toggle-settings" onclick="toggleDark()"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Show gamification</span>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">AI watering tips</span>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="form-group" style="margin-top:1rem">
+          <label>Default room view</label>
+          <select id="default-room">
+            <option>All Plants</option>
+            <option>Balcony</option>
+            <option>Bedroom</option>
+            <option>Kitchen</option>
+            <option>Living Room</option>
+            <option>Garden</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="settings-card" style="grid-column:1/-1">
+        <h3>🏆 Achievements</h3>
+        <div id="settings-achievements" style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:0.5rem"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PRIVACY PAGE ══════════ -->
+<div id="page-privacy" class="page">
+  <div class="policy-wrap">
+    <h1>🌿 Privacy Policy</h1>
+    <p>Last updated: April 2025</p>
+    <h3>What we collect</h3>
+    <p>Leafy stores your plant data locally in your browser. If you enable email reminders, we collect only your email address to send care notifications. AI features process images temporarily and do not store them.</p>
+    <h3>How we use it</h3>
+    <p>Your data is used exclusively to provide plant care reminders and AI-powered insights. We never sell your data to third parties or use it for advertising.</p>
+    <h3>AI & Images</h3>
+    <p>Photos uploaded to AI Tools are sent to our AI provider for analysis and are not retained after processing. No images are stored on our servers.</p>
+    <h3>Contact</h3>
+    <p>Questions? Reach us at hello@leafy.app</p>
+    <br>
+    <button class="btn-secondary" onclick="showPage('home')" style="padding:0.6rem 1.5rem">← Back to Leafy</button>
+  </div>
+</div>
+
+<!-- ══════════ MODALS ══════════ -->
+
+<!-- Add Plant Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <h2>🌱 Add New Plant</h2>
+    <div class="form-group-modal">
+      <label>Choose Emoji</label>
+      <div class="emoji-picker" id="emoji-picker">
+        <span class="emoji-option selected" data-emoji="🪴" onclick="selectEmoji(this)">🪴</span>
+        <span class="emoji-option" data-emoji="🌵" onclick="selectEmoji(this)">🌵</span>
+        <span class="emoji-option" data-emoji="🌿" onclick="selectEmoji(this)">🌿</span>
+        <span class="emoji-option" data-emoji="🌸" onclick="selectEmoji(this)">🌸</span>
+        <span class="emoji-option" data-emoji="🌺" onclick="selectEmoji(this)">🌺</span>
+        <span class="emoji-option" data-emoji="🌻" onclick="selectEmoji(this)">🌻</span>
+        <span class="emoji-option" data-emoji="🍀" onclick="selectEmoji(this)">🍀</span>
+        <span class="emoji-option" data-emoji="🎋" onclick="selectEmoji(this)">🎋</span>
+        <span class="emoji-option" data-emoji="🌴" onclick="selectEmoji(this)">🌴</span>
+        <span class="emoji-option" data-emoji="🍃" onclick="selectEmoji(this)">🍃</span>
+        <span class="emoji-option" data-emoji="🌷" onclick="selectEmoji(this)">🌷</span>
+        <span class="emoji-option" data-emoji="🎍" onclick="selectEmoji(this)">🎍</span>
+      </div>
+    </div>
+    <div class="form-group-modal">
+      <label>Plant Name</label>
+      <input type="text" id="plant-name-input" placeholder="e.g. Monstera Deliciosa">
+    </div>
+    <div class="form-group-modal">
+      <label>Plant Type</label>
+      <select id="plant-type-input">
+        <option>Tropical</option><option>Succulent</option><option>Cactus</option>
+        <option>Herb</option><option>Flowering</option><option>Fern</option>
+        <option>Tree</option><option>Vine</option><option>Other</option>
+      </select>
+    </div>
+    <div class="form-group-modal">
+      <label>Room / Location</label>
+      <select id="plant-room-input">
+        <option>Living Room</option><option>Bedroom</option><option>Kitchen</option>
+        <option>Bathroom</option><option>Balcony</option><option>Garden</option>
+        <option>Office</option><option>Other</option>
+      </select>
+    </div>
+    <div class="form-group-modal">
+      <label>Water Every (days)</label>
+      <input type="number" id="plant-water-input" value="7" min="1" max="90">
+    </div>
+    <div class="form-group-modal">
+      <label>Notes (optional)</label>
+      <textarea id="plant-notes-input" placeholder="Special care instructions, quirks..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="addPlant()">Add Plant 🌱</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detail-modal-overlay" onclick="handleDetailOverlayClick(event)">
+  <div class="modal detail-modal">
+    <div class="detail-header">
+      <div class="detail-emoji" id="detail-emoji">🌿</div>
+      <div class="detail-title">
+        <h2 id="detail-name">Plant Name</h2>
+        <p id="detail-subtitle">Type · Location</p>
+      </div>
+    </div>
+    <div class="detail-stats">
+      <div class="detail-stat">
+        <div class="detail-stat-val" id="detail-health">100%</div>
+        <div class="detail-stat-label">Health</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-val" id="detail-count">0</div>
+        <div class="detail-stat-label">Waterings</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-val" id="detail-schedule">7d</div>
+        <div class="detail-stat-label">Schedule</div>
+      </div>
+    </div>
+    <div class="detail-section-title">Care History</div>
+    <div class="history-list" id="detail-history"></div>
+    <div id="detail-notes-wrap" style="margin-top:1.5rem;display:none">
+      <div class="detail-section-title">Notes</div>
+      <p id="detail-notes" style="font-size:0.88rem;color:var(--text-muted);line-height:1.6"></p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeDetailModal()">Close</button>
+      <button class="btn-save" onclick="openEditFromDetail()">Edit Plant ✏️</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="edit-modal-overlay" onclick="handleEditOverlayClick(event)">
+  <div class="modal">
+    <h2>✏️ Edit Plant</h2>
+    <input type="hidden" id="edit-plant-id">
+    <div class="form-group-modal">
+      <label>Choose Emoji</label>
+      <div class="emoji-picker" id="edit-emoji-picker">
+        <span class="emoji-option selected" data-emoji="🪴" onclick="selectEditEmoji(this)">🪴</span>
+        <span class="emoji-option" data-emoji="🌵" onclick="selectEditEmoji(this)">🌵</span>
+        <span class="emoji-option" data-emoji="🌿" onclick="selectEditEmoji(this)">🌿</span>
+        <span class="emoji-option" data-emoji="🌸" onclick="selectEditEmoji(this)">🌸</span>
+        <span class="emoji-option" data-emoji="🌺" onclick="selectEditEmoji(this)">🌺</span>
+        <span class="emoji-option" data-emoji="🌻" onclick="selectEditEmoji(this)">🌻</span>
+        <span class="emoji-option" data-emoji="🍀" onclick="selectEditEmoji(this)">🍀</span>
+        <span class="emoji-option" data-emoji="🎋" onclick="selectEditEmoji(this)">🎋</span>
+        <span class="emoji-option" data-emoji="🌴" onclick="selectEditEmoji(this)">🌴</span>
+        <span class="emoji-option" data-emoji="🍃" onclick="selectEditEmoji(this)">🍃</span>
+        <span class="emoji-option" data-emoji="🌷" onclick="selectEditEmoji(this)">🌷</span>
+        <span class="emoji-option" data-emoji="🎍" onclick="selectEditEmoji(this)">🎍</span>
+      </div>
+    </div>
+    <div class="form-group-modal">
+      <label>Plant Name</label>
+      <input type="text" id="edit-name-input" placeholder="Plant name">
+    </div>
+    <div class="form-group-modal">
+      <label>Plant Type</label>
+      <select id="edit-type-input">
+        <option>Tropical</option><option>Succulent</option><option>Cactus</option>
+        <option>Herb</option><option>Flowering</option><option>Fern</option>
+        <option>Tree</option><option>Vine</option><option>Other</option>
+      </select>
+    </div>
+    <div class="form-group-modal">
+      <label>Room / Location</label>
+      <select id="edit-room-input">
+        <option>Living Room</option><option>Bedroom</option><option>Kitchen</option>
+        <option>Bathroom</option><option>Balcony</option><option>Garden</option>
+        <option>Office</option><option>Other</option>
+      </select>
+    </div>
+    <div class="form-group-modal">
+      <label>Water Every (days)</label>
+      <input type="number" id="edit-water-input" value="7" min="1" max="90">
+    </div>
+    <div class="form-group-modal">
+      <label>Notes</label>
+      <textarea id="edit-notes-input" placeholder="Special care instructions..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-danger" onclick="deletePlant()">Delete</button>
+      <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+      <button class="btn-save" onclick="saveEditPlant()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Journal Add Modal -->
+<div class="modal-overlay" id="journal-modal-overlay" onclick="if(event.target===this)closeJournalModal()">
+  <div class="modal journal-modal">
+    <h2>📔 New Journal Entry</h2>
+    <div class="form-group-modal">
+      <label>Plant</label>
+      <select id="journal-plant-select"></select>
+    </div>
+    <div class="form-group-modal">
+      <label>Notes</label>
+      <textarea id="journal-notes-input" placeholder="How is your plant doing? New growth, leaf changes, repotting..." style="min-height:120px"></textarea>
+    </div>
+    <div class="form-group-modal">
+      <label>Photo (optional)</label>
+      <div class="upload-zone" style="padding:1.5rem" onclick="document.getElementById('journal-photo-input').click()">
+        <input type="file" id="journal-photo-input" accept="image/*" onchange="handleJournalPhoto(event)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%">
+        <p style="margin:0;font-size:0.85rem;color:var(--text-muted)">📷 Tap to add a photo</p>
+      </div>
+      <div id="journal-photo-preview" style="display:none;margin-top:0.75rem;border-radius:12px;overflow:hidden">
+        <img id="journal-photo-img" style="width:100%;max-height:200px;object-fit:cover">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeJournalModal()">Cancel</button>
+      <button class="btn-save" onclick="addJournalEntry()">Save Entry 📔</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ══════════════════════════════════════════
+  // ── AUTH SYSTEM ──
+  // Users stored in localStorage keyed by email
+  // Each user has their own plants, journal, etc.
+  // ══════════════════════════════════════════
+  function getUsers() { return JSON.parse(localStorage.getItem('leafy-users') || '{}'); }
+  function saveUsers(u) { localStorage.setItem('leafy-users', JSON.stringify(u)); }
+  function getCurrentUser() { return JSON.parse(localStorage.getItem('leafy-current-user') || 'null'); }
+  function setCurrentUser(u) { localStorage.setItem('leafy-current-user', JSON.stringify(u)); }
+
+  function userKey(email, k) { return `leafy-u-${email}-${k}`; }
+  function getUserData(k, def) {
+    const u = getCurrentUser();
+    if (!u) return def;
+    return JSON.parse(localStorage.getItem(userKey(u.email, k)) || JSON.stringify(def));
+  }
+  function setUserData(k, v) {
+    const u = getCurrentUser();
+    if (!u) return;
+    localStorage.setItem(userKey(u.email, k), JSON.stringify(v));
+  }
+
+  function switchAuthTab(tab) {
+    document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+    document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+    document.getElementById('form-login').classList.toggle('active', tab === 'login');
+    document.getElementById('form-register').classList.toggle('active', tab === 'register');
+    document.getElementById('login-error').classList.remove('show');
+    document.getElementById('reg-error').classList.remove('show');
+  }
+
+  function showAuthError(formId, msg) {
+    const el = document.getElementById(formId + '-error');
+    el.textContent = msg; el.classList.add('show');
+  }
+
+  function doRegister() {
+    const name = document.getElementById('reg-name').value.trim();
+    const email = document.getElementById('reg-email').value.trim().toLowerCase();
+    const password = document.getElementById('reg-password').value;
+    if (!name) { showAuthError('reg', 'Please enter your name'); return; }
+    if (!email || !email.includes('@')) { showAuthError('reg', 'Please enter a valid email'); return; }
+    if (password.length < 6) { showAuthError('reg', 'Password must be at least 6 characters'); return; }
+    const users = getUsers();
+    if (users[email]) { showAuthError('reg', 'An account with this email already exists. Sign in instead.'); return; }
+    users[email] = { name, email, password, joined: new Date().toISOString() };
+    saveUsers(users);
+    setCurrentUser({ name, email });
+    document.getElementById('auth-overlay').classList.remove('active');
+    initUserSession();
+    showToast(`Welcome to Leafy, ${name}! 🌱`);
+    setTimeout(() => showWelcomeEmailNotif(true), 1500);
+  }
+
+  function doLogin() {
+    try {
+      const email = document.getElementById('login-email').value.trim().toLowerCase();
+      const password = document.getElementById('login-password').value;
+      if (!email) { showAuthError('login', 'Please enter your email'); return; }
+      if (!password) { showAuthError('login', 'Please enter your password'); return; }
+      const users = getUsers();
+      if (!users[email]) {
+        // Auto-fill register form and switch to it
+        document.getElementById('reg-email').value = document.getElementById('login-email').value.trim();
+        document.getElementById('reg-password').value = password;
+        switchAuthTab('register');
+        showAuthError('reg', '👋 No account found — please enter your name below and create your account (it only takes a second!)');
+        document.getElementById('reg-name').focus();
+        return;
+      }
+      if (users[email].password !== password) { showAuthError('login', '❌ Incorrect password. Please try again.'); return; }
+      setCurrentUser({ name: users[email].name, email });
+      document.getElementById('auth-overlay').classList.remove('active');
+      initUserSession();
+      showToast(`Welcome back, ${users[email].name}! 🌿`);
+      setTimeout(() => showWelcomeEmailNotif(false), 1500);
+    } catch(e) { showAuthError('login', 'Something went wrong. Please try again.'); }
+  }
+
+  function doGuest() {
+    try {
+      const guestUser = { name: 'Guest', email: 'guest@leafy.app', isGuest: true };
+      setCurrentUser(guestUser);
+      document.getElementById('auth-overlay').classList.remove('active');
+      plants = []; totalWaterings = 0; journalEntries = []; aiQueries = 0; streak = 0;
+      document.getElementById('nav-user').style.display = 'flex';
+      document.getElementById('nav-user-name').textContent = 'Guest';
+      document.getElementById('nav-user-avatar').textContent = '🌿';
+      document.getElementById('nav-logout-btn').style.display = 'flex';
+      document.getElementById('nav-login-btn').style.display = 'none';
+      renderDashboard();
+      showToast('Welcome! Browsing as Guest 🌱');
+      if (!localStorage.getItem('leafy-onboarded')) {
+        setTimeout(() => document.getElementById('onboarding-overlay').classList.add('active'), 800);
+      }
+    } catch(e) {
+      // Fallback — force hide overlay
+      document.getElementById('auth-overlay').style.display = 'none';
+      renderDashboard();
+    }
+  }
+
+  function doLogout() {
+    if (!confirm('Sign out of Leafy?')) return;
+    localStorage.removeItem('leafy-current-user');
+    // Reset in-memory state
+    plants = []; totalWaterings = 0; journalEntries = []; aiQueries = 0; streak = 0;
+    // Show auth, hide app UI
+    document.getElementById('auth-overlay').classList.add('active');
+    document.getElementById('nav-user').style.display = 'none';
+    document.getElementById('nav-logout-btn').style.display = 'none';
+    document.getElementById('nav-login-btn').style.display = 'flex';
+    showPage('home');
+  }
+
+  function initUserSession() {
+    const u = getCurrentUser();
+    if (!u) return;
+    // Load this user's data into memory
+    plants = getUserData('plants', []);
+    totalWaterings = getUserData('waterings', 0);
+    journalEntries = getUserData('journal', []);
+    aiQueries = getUserData('ai-queries', 0);
+    streak = getUserData('streak', 0);
+    lastWateringDate = getUserData('last-watering-date', '');
+    // Update nav
+    document.getElementById('nav-user').style.display = 'flex';
+    document.getElementById('nav-user-name').textContent = u.name.split(' ')[0];
+    document.getElementById('nav-user-avatar').textContent = localStorage.getItem(userKey(u.email, 'avatar')) || '🌿';
+    document.getElementById('nav-logout-btn').style.display = 'flex';
+    document.getElementById('nav-login-btn').style.display = 'none';
+    renderDashboard();
+    if (localStorage.getItem('leafy-dark')) { document.body.classList.add('dark'); document.getElementById('dark-btn').textContent = '☀️'; }
+  }
+
+  // ══════════════════════════════════════════
+  // ── IN-APP EMAIL NOTIFICATION ──
+  // Shows plant summary as a notification panel
+  // with a "Send to My Email" button that opens
+  // the user's mail app pre-filled (no backend needed)
+  // ══════════════════════════════════════════
+  function buildEmailBody(name) {
+    const date = new Date().toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    const lines = plants.length === 0
+      ? '🌱 No plants tracked yet — add your first plant in the app!'
+      : plants.map(p => {
+          const d = Math.max(0, (p.waterEvery||7) - (p.lastWatered||0));
+          const s = d===0 ? '⚠️ NEEDS WATER NOW' : d===1 ? '💧 Water tomorrow' : `✅ Water in ${d} days`;
+          return `  ${p.emoji} ${p.name} — ${p.location}\n     → ${s}`;
+        }).join('\n');
+    return `Hi ${name}! 🌿
+
+Here's your Leafy plant care summary for ${date}:
+
+YOUR PLANTS:
+${lines}
+
+STATS:
+  🪴 Total plants: ${plants.length}
+  🔥 Watering streak: ${streak} days
+  💧 Total waterings: ${totalWaterings}
+  📔 Journal entries: ${journalEntries.length}
+
+Keep growing! 🌱
+— The Leafy App
+https://leafy-app-navy.vercel.app`;
+  }
+
+  function showWelcomeEmailNotif(isNew) {
+    const u = getCurrentUser();
+    if (!u) return;
+    const nb = document.getElementById('email-notif-body');
+    nb.textContent = isNew
+      ? `Welcome to Leafy! Your account is set up at ${u.email}. Here's your garden overview:`
+      : `Welcome back! Here's what's happening with your plants today:`;
+
+    const plantsEl = document.getElementById('email-notif-plants');
+    if (plants.length === 0) {
+      plantsEl.innerHTML = `<div style="font-size:0.82rem;color:var(--text-muted);padding:0.3rem 0">No plants yet — add your first one! 🌱</div>`;
+    } else {
+      plantsEl.innerHTML = plants.slice(0, 4).map(p => {
+        const d = Math.max(0, (p.waterEvery||7) - (p.lastWatered||0));
+        const s = d===0 ? '<span style="color:var(--rust)">⚠️ Water now</span>' : d===1 ? '<span style="color:#f0a500">💧 Tomorrow</span>' : `<span style="color:var(--green-mid)">✅ ${d}d</span>`;
+        return `<div class="email-notif-plant"><span class="email-notif-plant-name">${p.emoji} ${p.name}</span><span class="email-notif-plant-status">${s}</span></div>`;
+      }).join('') + (plants.length > 4 ? `<div style="font-size:0.75rem;color:var(--text-muted);padding:0.2rem 0.5rem">+${plants.length-4} more plants</div>` : '');
+    }
+    document.getElementById('email-notif').classList.add('show');
+  }
+
+  function showEmailSummary() {
+    showWelcomeEmailNotif(false);
+  }
+
+  function closeEmailNotif() {
+    document.getElementById('email-notif').classList.remove('show');
+  }
+
+  function sendEmailViaMailto() {
+    const u = getCurrentUser();
+    if (!u) { showToast('Please sign in first'); return; }
+    const subject = encodeURIComponent('🌿 Your Leafy Plant Care Summary');
+    const body = encodeURIComponent(buildEmailBody(u.name));
+    window.open(`mailto:${u.email}?subject=${subject}&body=${body}`);
+    showToast('📧 Opening your email app…');
+    closeEmailNotif();
+  }
+
+  // ══════════════════════════════════════════
+  // ── STATE (loaded per-user in initUserSession) ──
+  // ══════════════════════════════════════════
+  let plants = [];
+  let totalWaterings = 0;
+  let selectedEmoji = '🪴';
+  let editSelectedEmoji = '🪴';
+  let detailPlantId = null;
+  let activeRoom = 'All';
+  let journalEntries = [];
+  let journalPhotoData = null;
+  let aiQueries = 0;
+  let streak = 0;
+  let lastWateringDate = '';
+
+  const ROOMS = ['All', 'Living Room', 'Bedroom', 'Kitchen', 'Bathroom', 'Balcony', 'Garden', 'Office', 'Other'];
+  const ACHIEVEMENTS = [
+    { id: 'first', emoji: '🌱', label: 'First Plant', condition: () => plants.length >= 1 },
+    { id: 'collector', emoji: '🪴', label: 'Collector (5+)', condition: () => plants.length >= 5 },
+    { id: 'waterer10', emoji: '💧', label: '10 Waterings', condition: () => totalWaterings >= 10 },
+    { id: 'streak7', emoji: '🔥', label: '7-Day Streak', condition: () => streak >= 7 },
+    { id: 'journaler', emoji: '📔', label: 'Journaler', condition: () => journalEntries.length >= 3 },
+    { id: 'ai_user', emoji: '🤖', label: 'AI Explorer', condition: () => aiQueries >= 1 },
+  ];
+
+  function savePlants() {
+    setUserData('plants', plants);
+    setUserData('waterings', totalWaterings);
+  }
+
+  // ── DARK MODE ──
+  function toggleDark() {
+    const dark = document.body.classList.toggle('dark');
+    document.getElementById('dark-btn').textContent = dark ? '☀️' : '🌙';
+    const settingsToggle = document.getElementById('dark-toggle-settings');
+    if (settingsToggle) settingsToggle.classList.toggle('on', dark);
+    localStorage.setItem('leafy-dark', dark ? '1' : '');
+  }
+  if (localStorage.getItem('leafy-dark')) {
+    document.body.classList.add('dark');
+    document.getElementById('dark-btn').textContent = '☀️';
+  }
+
+  // ── PAGE ROUTING ──
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('nav ul li a').forEach(a => a.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    const navEl = document.getElementById('nav-' + name);
+    if (navEl) navEl.classList.add('active');
+    if (name === 'dashboard') renderDashboard();
+    if (name === 'settings') renderSettings();
+    if (name === 'journal') renderJournal();
+    window.scrollTo(0, 0);
+  }
+
+  // ── ONBOARDING ──
+  let obStep = 1;
+  function nextOnboardingStep() {
+    if (obStep < 3) {
+      document.getElementById('ob-step-' + obStep).classList.remove('active');
+      document.getElementById('ob-dot-' + obStep).classList.remove('active');
+      obStep++;
+      document.getElementById('ob-step-' + obStep).classList.add('active');
+      document.getElementById('ob-dot-' + obStep).classList.add('active');
+      if (obStep === 3) document.getElementById('ob-next').textContent = 'Get Started 🌱';
+    } else {
+      finishOnboarding();
+    }
+  }
+  function finishOnboarding() {
+    document.getElementById('onboarding-overlay').classList.remove('active');
+    localStorage.setItem('leafy-onboarded', '1');
+  }
+
+  // ── GREETING ──
+  function getGreeting() {
+    const h = new Date().getHours();
+    if (h < 12) return 'morning';
+    if (h < 17) return 'afternoon';
+    return 'evening';
+  }
+
+  // ── GAMIFICATION ──
+  function calcXP() { return totalWaterings * 10 + journalEntries.length * 15 + aiQueries * 5; }
+  function calcLevel(xp) {
+    const levels = [0, 50, 150, 300, 500, 800, 1200, 1800, 2600, 3600];
+    for (let i = levels.length - 1; i >= 0; i--) { if (xp >= levels[i]) return i + 1; }
+    return 1;
+  }
+  const LEVEL_NAMES = ['', 'Seedling', 'Sprout', 'Sapling', 'Gardener', 'Green Thumb', 'Botanist', 'Plant Whisperer', 'Garden Guru', 'Nature Master', 'Plant Legend'];
+  function renderGamification() {
+    const xp = calcXP();
+    const level = Math.min(calcLevel(xp), 10);
+    const levels = [0, 50, 150, 300, 500, 800, 1200, 1800, 2600, 3600, 999999];
+    const pct = Math.min(100, Math.round((xp - levels[level-1]) / (levels[level] - levels[level-1]) * 100));
+    document.getElementById('game-level').textContent = level;
+    document.getElementById('game-title').textContent = LEVEL_NAMES[level] || 'Legend';
+    document.getElementById('game-sub').textContent = `${xp} XP · ${levels[level] - xp > 0 ? levels[level] - xp + ' XP to next level' : 'Max level!'}`;
+    document.getElementById('game-xp-fill').style.width = pct + '%';
+    document.getElementById('streak-badge').textContent = `🔥 ${streak}d`;
+    const earned = ACHIEVEMENTS.filter(a => a.condition());
+    const achRow = document.getElementById('achievements-row');
+    if (achRow) achRow.innerHTML = earned.slice(0, 3).map(a => `<div class="achievement" title="${a.label}">${a.emoji}</div>`).join('');
+    const pb = document.getElementById('profile-badge');
+    if (pb) pb.textContent = `${LEVEL_NAMES[level] || 'Legend'} · Level ${level}`;
+  }
+  function renderSettingsAchievements() {
+    const el = document.getElementById('settings-achievements');
+    if (!el) return;
+    el.innerHTML = ACHIEVEMENTS.map(a => `
+      <div class="achievement ${a.condition() ? '' : 'locked'}" title="${a.label}">
+        <span>${a.emoji}</span> <span style="font-size:0.78rem">${a.label}</span>
+      </div>`).join('');
+  }
+
+  // ── WEATHER TIP ──
+  function showWeatherTip() {
+    const tips = [
+      'It\'s <strong>summer season</strong> — your tropical plants may need watering more frequently.',
+      'Indoor humidity is typically <strong>low in AC rooms</strong>. Consider misting tropical plants.',
+      'Morning watering is best — soil absorbs water before the day heats up.',
+      'Check soil moisture before watering. Stick a finger 2cm deep — if dry, water now.',
+    ];
+    const tip = tips[Math.floor(Math.random() * tips.length)];
+    const el = document.getElementById('weather-tip');
+    const txt = document.getElementById('weather-tip-text');
+    if (el && txt) { txt.innerHTML = tip; el.style.display = 'flex'; }
+  }
+
+  // ── TODAY STATS ──
+  function renderTodayStats() {
+    const overdue = plants.filter(p => p.lastWatered >= p.waterEvery).length;
+    const waterToday = plants.filter(p => p.lastWatered === p.waterEvery - 1).length;
+    const healthy = plants.filter(p => p.health >= 80).length;
+    document.getElementById('today-stats').innerHTML = `
+      <div class="today-stat-card"><div class="today-stat-icon">🪴</div>
+        <div><div class="today-stat-num">${plants.length}</div><div class="today-stat-label">Total Plants</div></div></div>
+      <div class="today-stat-card"><div class="today-stat-icon">⚠️</div>
+        <div><div class="today-stat-num" style="color:var(--rust)">${overdue}</div><div class="today-stat-label">Need Water</div></div></div>
+      <div class="today-stat-card"><div class="today-stat-icon">💧</div>
+        <div><div class="today-stat-num">${waterToday}</div><div class="today-stat-label">Water Today</div></div></div>
+      <div class="today-stat-card"><div class="today-stat-icon">💚</div>
+        <div><div class="today-stat-num" style="color:var(--green-mid)">${healthy}</div><div class="today-stat-label">Healthy</div></div></div>`;
+  }
+
+  // ── ROOM TABS ──
+  function renderRoomTabs() {
+    const rooms = ['All', ...new Set(plants.map(p => p.location || 'Other'))];
+    document.getElementById('room-tabs').innerHTML = rooms.map(r =>
+      `<button class="room-tab ${activeRoom === r ? 'active' : ''}" onclick="filterRoom('${r}')">${r === 'All' ? '🌍 All' : r}</button>`
+    ).join('');
+  }
+  function filterRoom(room) { activeRoom = room; renderDashboard(); }
+
+  // ── DASHBOARD ──
+  function renderDashboard() {
+    const u = getCurrentUser();
+    const name = u ? u.name.split(' ')[0] : 'Plant Parent';
+    document.getElementById('greeting-time').textContent = getGreeting();
+    document.getElementById('greeting-name').textContent = name + ' 🌿';
+    const overdue = plants.filter(p => p.lastWatered >= p.waterEvery).length;
+    document.getElementById('reminder-count').textContent = overdue > 0
+      ? `⚠️ ${overdue} plant${overdue !== 1 ? 's' : ''} need water today`
+      : plants.length > 0 ? '✅ All plants are happy!' : 'Add your first plant to get started';
+    renderTodayStats();
+    renderGamification();
+    showWeatherTip();
+    renderRoomTabs();
+    const overdueBanner = document.getElementById('overdue-banner');
+    if (overdue > 0) {
+      overdueBanner.style.display = 'flex';
+      document.getElementById('overdue-title').textContent = `${overdue} plant${overdue !== 1 ? 's' : ''} need watering!`;
+      document.getElementById('overdue-sub').textContent = plants.filter(p => p.lastWatered >= p.waterEvery).map(p => p.name).join(', ');
+    } else { overdueBanner.style.display = 'none'; }
+
+    const filtered = activeRoom === 'All' ? plants : plants.filter(p => p.location === activeRoom);
+    const grid = document.getElementById('plants-grid');
+    if (plants.length === 0) {
+      grid.innerHTML = `<div class="empty-state">
+        <span class="empty-state-emoji">🌱</span>
+        <h3>Your garden is empty</h3>
+        <p>Add your first plant to start tracking care schedules and get AI-powered insights.</p>
+        <button class="btn-primary" style="margin-top:1rem" onclick="openModal()">Add Your First Plant →</button>
+      </div>`;
+    } else {
+      grid.innerHTML = filtered.map(p => {
+        const pct = Math.min(100, Math.round((p.lastWatered / p.waterEvery) * 100));
+        const low = pct > 75;
+        const daysLeft = p.waterEvery - p.lastWatered;
+        const statusText = daysLeft <= 0 ? '⚠️ Overdue' : daysLeft === 1 ? '💧 Water today' : `💧 In ${daysLeft} days`;
+        const statusClass = daysLeft <= 0 ? 'urgent' : daysLeft === 1 ? 'urgent' : 'ok';
+        return `<div class="plant-card fade-in">
+          ${p.waterCount >= 10 ? '<div class="plant-xp-badge">⭐ Pro</div>' : ''}
+          <div class="plant-card-emoji">${p.emoji}</div>
+          <div class="plant-card-name">${p.name}</div>
+          <div class="plant-card-type">${p.type}</div>
+          <div class="plant-room-badge">📍 ${p.location}</div>
+          <div class="plant-card-divider"></div>
+          <div class="plant-meta">
+            <div class="plant-meta-row"><span class="plant-meta-label">Health</span><span class="plant-meta-value ${p.health < 60 ? 'urgent' : 'ok'}">${p.health}%</span></div>
+            <div class="plant-meta-row"><span class="plant-meta-label">Next water</span><span class="plant-meta-value ${statusClass}">${statusText}</span></div>
+          </div>
+          <div class="water-bar"><div class="water-bar-fill ${low ? 'low' : ''}" style="width:${pct}%"></div></div>
+          <div class="plant-card-actions">
+            <button class="btn-water" onclick="event.stopPropagation();markDone(${p.id})">💧 Watered</button>
+            <button class="btn-details" onclick="event.stopPropagation();openDetailModal(${p.id})">Details</button>
+            <button class="btn-details" onclick="event.stopPropagation();openEditModal(${p.id})" style="padding:0.5rem 0.5rem">✏️</button>
+          </div>
+        </div>`;
+      }).join('') + `<div class="add-plant-card" onclick="openModal()"><div class="plus">＋</div><span>Add Plant</span></div>`;
+    }
+
+    let html = '';
+    [...plants].sort((a, b) => (a.waterEvery - a.lastWatered) - (b.waterEvery - b.lastWatered)).slice(0, 6).forEach(p => {
+      const d = Math.max(0, p.waterEvery - p.lastWatered);
+      const isUrgent = d <= 0;
+      html += `<div class="reminder-item ${isUrgent ? 'urgent' : ''}">
+        <div class="reminder-emoji">${p.emoji}</div>
+        <div class="reminder-info">
+          <div class="reminder-name">${p.name}</div>
+          <div class="reminder-action">${isUrgent ? '🚨 Overdue!' : `💧 Water in ${d} day${d !== 1 ? 's' : ''}`} · ${p.location}</div>
+        </div>
+        <span class="reminder-time ${isUrgent ? 'today' : 'soon'}">${isUrgent ? 'Now' : 'In ' + d + 'd'}</span>
+        <button class="btn-done" onclick="markDone(${p.id})">✓</button>
+      </div>`;
+    });
+    if (!html) html = `<div style="text-align:center;color:var(--text-muted);padding:2rem;font-size:0.9rem">🎉 All plants are happy!</div>`;
+    document.getElementById('reminders-list').innerHTML = html;
+  }
+
+  function markDone(id) {
+    const p = plants.find(x => x.id === id);
+    if (p) {
+      p.lastWatered = 0;
+      p.health = Math.min(100, p.health + 5);
+      p.waterCount = (p.waterCount || 0) + 1;
+      totalWaterings++;
+      const today = new Date().toDateString();
+      if (lastWateringDate !== today) {
+        streak++;
+        lastWateringDate = today;
+        setUserData('streak', streak);
+        setUserData('last-watering-date', today);
+      }
+      const todayFmt = new Date().toLocaleDateString('en-US', {month:'short',day:'numeric'});
+      if (!p.history) p.history = [];
+      p.history.unshift(`Watered on ${todayFmt}`);
+      if (p.history.length > 20) p.history = p.history.slice(0, 20);
+      savePlants();
+      renderDashboard();
+      showToast(`${p.emoji} ${p.name} watered! 💧 +10 XP`);
+      // Auto email reminder if overdue plants remain
+      const stillOverdue = plants.filter(x => x.lastWatered >= x.waterEvery);
+      if (stillOverdue.length > 0) {
+        setTimeout(() => showWelcomeEmailNotif(false), 800);
+      }
+    }
+  }
+
+  // ── DETAIL MODAL ──
+  function openDetailModal(id) {
+    const p = plants.find(x => x.id === id);
+    if (!p) return;
+    detailPlantId = id;
+    document.getElementById('detail-emoji').textContent = p.emoji;
+    document.getElementById('detail-name').textContent = p.name;
+    document.getElementById('detail-subtitle').textContent = `${p.type} · ${p.location}`;
+    document.getElementById('detail-health').textContent = p.health + '%';
+    document.getElementById('detail-count').textContent = p.waterCount || 0;
+    document.getElementById('detail-schedule').textContent = p.waterEvery + 'd';
+    const hist = p.history || [];
+    document.getElementById('detail-history').innerHTML = hist.length === 0
+      ? '<div style="color:var(--text-muted);font-size:0.85rem;padding:0.5rem 0">No care events logged yet.</div>'
+      : hist.map(h => `<div class="history-item"><span class="history-icon">💧</span>${h}</div>`).join('');
+    const notesWrap = document.getElementById('detail-notes-wrap');
+    notesWrap.style.display = p.notes ? 'block' : 'none';
+    if (p.notes) document.getElementById('detail-notes').textContent = p.notes;
+    document.getElementById('detail-modal-overlay').classList.add('active');
+  }
+  function closeDetailModal() { document.getElementById('detail-modal-overlay').classList.remove('active'); }
+  function handleDetailOverlayClick(e) { if (e.target === document.getElementById('detail-modal-overlay')) closeDetailModal(); }
+  function openEditFromDetail() { closeDetailModal(); openEditModal(detailPlantId); }
+
+  // ── EDIT MODAL ──
+  function openEditModal(id) {
+    const p = plants.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('edit-plant-id').value = id;
+    document.getElementById('edit-name-input').value = p.name;
+    document.getElementById('edit-water-input').value = p.waterEvery;
+    document.getElementById('edit-notes-input').value = p.notes || '';
+    document.getElementById('edit-type-input').value = p.type;
+    const roomSel = document.getElementById('edit-room-input');
+    for (let o of roomSel.options) { if (o.value === p.location) o.selected = true; }
+    editSelectedEmoji = p.emoji;
+    document.querySelectorAll('#edit-emoji-picker .emoji-option').forEach(e => {
+      e.classList.toggle('selected', e.dataset.emoji === p.emoji);
+    });
+    document.getElementById('edit-modal-overlay').classList.add('active');
+  }
+  function closeEditModal() { document.getElementById('edit-modal-overlay').classList.remove('active'); }
+  function handleEditOverlayClick(e) { if (e.target === document.getElementById('edit-modal-overlay')) closeEditModal(); }
+  function selectEditEmoji(el) {
+    document.querySelectorAll('#edit-emoji-picker .emoji-option').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected'); editSelectedEmoji = el.dataset.emoji;
+  }
+  function saveEditPlant() {
+    const id = parseInt(document.getElementById('edit-plant-id').value);
+    const p = plants.find(x => x.id === id);
+    if (!p) return;
+    const name = document.getElementById('edit-name-input').value.trim();
+    if (!name) { showToast('Plant name is required 🌿'); return; }
+    p.emoji = editSelectedEmoji; p.name = name;
+    p.type = document.getElementById('edit-type-input').value;
+    p.location = document.getElementById('edit-room-input').value || 'Other';
+    p.waterEvery = parseInt(document.getElementById('edit-water-input').value) || 7;
+    p.notes = document.getElementById('edit-notes-input').value.trim();
+    savePlants(); closeEditModal(); renderDashboard();
+    showToast(`${p.emoji} ${p.name} updated!`);
+  }
+  function deletePlant() {
+    const id = parseInt(document.getElementById('edit-plant-id').value);
+    const p = plants.find(x => x.id === id);
+    if (!p) return;
+    if (!confirm(`Delete ${p.emoji} ${p.name}? This cannot be undone.`)) return;
+    plants = plants.filter(x => x.id !== id);
+    savePlants(); closeEditModal(); renderDashboard();
+    showToast(`${p.emoji} ${p.name} removed.`);
+  }
+
+  // ── ADD MODAL ──
+  function openModal() {
+    document.getElementById('modal-overlay').classList.add('active');
+    document.getElementById('plant-name-input').focus();
+  }
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('active');
+    document.getElementById('plant-name-input').value = '';
+    document.getElementById('plant-notes-input').value = '';
+    document.getElementById('plant-water-input').value = '7';
+    selectedEmoji = '🪴';
+    document.querySelectorAll('#emoji-picker .emoji-option').forEach(e => e.classList.remove('selected'));
+    document.querySelector('#emoji-picker .emoji-option[data-emoji="🪴"]').classList.add('selected');
+  }
+  function handleOverlayClick(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
+  function selectEmoji(el) {
+    document.querySelectorAll('#emoji-picker .emoji-option').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected'); selectedEmoji = el.dataset.emoji;
+  }
+  function addPlant() {
+    const name = document.getElementById('plant-name-input').value.trim();
+    if (!name) { showToast('Please enter a plant name 🌿'); return; }
+    const newPlant = {
+      id: Date.now(), emoji: selectedEmoji, name,
+      type: document.getElementById('plant-type-input').value,
+      location: document.getElementById('plant-room-input').value || 'Other',
+      waterEvery: parseInt(document.getElementById('plant-water-input').value) || 7,
+      lastWatered: 0, health: 100, waterCount: 0,
+      notes: document.getElementById('plant-notes-input').value.trim(), history: []
+    };
+    plants.push(newPlant);
+    savePlants(); closeModal(); renderDashboard();
+    showToast(`${selectedEmoji} ${name} added to your garden! 🌱`);
+  }
+
+  // ── SETTINGS ──
+  function renderSettings() {
+    const u = getCurrentUser();
+    const savedName = u ? u.name : getUserData('username', 'Plant Parent');
+    document.getElementById('user-name-input').value = savedName;
+    document.getElementById('profile-name').textContent = savedName;
+    document.getElementById('user-email-input').value = u ? u.email : '';
+    document.getElementById('stat-plants').textContent = plants.length;
+    document.getElementById('stat-waterings').textContent = totalWaterings;
+    document.getElementById('stat-streak').textContent = streak + ' days 🔥';
+    document.getElementById('stat-journal').textContent = journalEntries.length;
+    document.getElementById('stat-ai').textContent = aiQueries;
+    const avatar = document.getElementById('avatar-display');
+    if (avatar) avatar.textContent = (u ? localStorage.getItem(userKey(u.email, 'avatar')) : null) || '🌿';
+    if (document.body.classList.contains('dark')) {
+      document.getElementById('dark-toggle-settings')?.classList.add('on');
+    }
+    document.getElementById('anthropic-key-input').value = localStorage.getItem('leafy-gemini-key') || '';
+    renderGamification();
+    renderSettingsAchievements();
+  }
+
+  function saveSettings() {
+    const name = document.getElementById('user-name-input').value.trim() || 'Plant Parent';
+    const u = getCurrentUser();
+    if (u) {
+      const users = getUsers();
+      if (users[u.email]) { users[u.email].name = name; saveUsers(users); }
+      setCurrentUser({ ...u, name });
+      document.getElementById('nav-user-name').textContent = name.split(' ')[0];
+    }
+    setUserData('username', name);
+    document.getElementById('profile-name').textContent = name;
+    showToast('Profile saved! ✅');
+  }
+
+  function saveApiKey() {
+    const ak = document.getElementById('anthropic-key-input').value.trim();
+    if (!ak) { showToast('Please enter your Gemini API key'); return; }
+    if (!ak.startsWith('AIza')) { showToast('⚠️ Gemini keys start with "AIza" — double-check your key'); return; }
+    localStorage.setItem('leafy-gemini-key', ak);
+    showToast('Gemini key saved! 🔑 Image AI is now active.');
+  }
+
+  const AVATARS = ['🌿', '🌱', '🪴', '🌸', '🌵', '🍀', '🌻', '🌴'];
+  let avatarIdx = 0;
+  function changeAvatar() {
+    avatarIdx = (avatarIdx + 1) % AVATARS.length;
+    const a = AVATARS[avatarIdx];
+    const u = getCurrentUser();
+    if (u) localStorage.setItem(userKey(u.email, 'avatar'), a);
+    document.getElementById('avatar-display').textContent = a;
+    document.getElementById('nav-user-avatar').textContent = a;
+    showToast('Avatar updated! ' + a);
+  }
+
+  // ── JOURNAL ──
+  function openJournalAddModal() {
+    const sel = document.getElementById('journal-plant-select');
+    sel.innerHTML = plants.length === 0
+      ? '<option>No plants yet — add one first!</option>'
+      : plants.map(p => `<option value="${p.id}">${p.emoji} ${p.name}</option>`).join('');
+    document.getElementById('journal-notes-input').value = '';
+    document.getElementById('journal-photo-preview').style.display = 'none';
+    journalPhotoData = null;
+    document.getElementById('journal-modal-overlay').classList.add('active');
+  }
+  function closeJournalModal() { document.getElementById('journal-modal-overlay').classList.remove('active'); }
+  function handleJournalPhoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      journalPhotoData = e.target.result;
+      document.getElementById('journal-photo-img').src = journalPhotoData;
+      document.getElementById('journal-photo-preview').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+  function addJournalEntry() {
+    const notes = document.getElementById('journal-notes-input').value.trim();
+    if (!notes) { showToast('Please add some notes 📝'); return; }
+    const sel = document.getElementById('journal-plant-select');
+    const plantId = parseInt(sel.value);
+    const plant = plants.find(p => p.id === plantId);
+    const entry = {
+      id: Date.now(), plantId,
+      plantName: plant ? plant.emoji + ' ' + plant.name : '🌿 Unknown',
+      notes, photo: journalPhotoData,
+      date: new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })
+    };
+    journalEntries.unshift(entry);
+    if (journalEntries.length > 50) journalEntries = journalEntries.slice(0, 50);
+    setUserData('journal', journalEntries);
+    closeJournalModal(); renderJournal();
+    showToast('Journal entry saved! 📔 +15 XP');
+  }
+  function renderJournal() {
+    const el = document.getElementById('journal-entries');
+    if (journalEntries.length === 0) {
+      el.innerHTML = `<div class="journal-empty"><span>📔</span><p>No journal entries yet.<br>Start documenting your plants' journey!</p></div>`;
+      return;
+    }
+    el.innerHTML = journalEntries.map(e => `
+      <div class="journal-entry fade-in">
+        ${e.photo ? `<img class="journal-entry-img" src="${e.photo}" alt="Plant photo">` : `<div class="journal-entry-photo">${e.plantName.split(' ')[0]}</div>`}
+        <div class="journal-entry-body">
+          <div class="journal-entry-plant">${e.plantName}</div>
+          <div class="journal-entry-date">📅 ${e.date}</div>
+          <div class="journal-entry-text">${e.notes}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  // ══════════════════════════════════════════
+  // ── AI TOOLS — FREE, NO API KEY NEEDED ──
+  // Chatbot + Watering: Smart plant knowledge
+  // base — works 100% offline, zero cost.
+  // Image AI: Google Gemini free tier
+  // (get free key at aistudio.google.com)
+  // ══════════════════════════════════════════
+
+  // ── PLANT KNOWLEDGE BASE (offline chatbot) ──
+  const PLANT_KB = {
+    yellow: "💛 Yellow leaves usually mean overwatering, poor drainage, or lack of light. Check if roots are soggy — let soil dry out between waterings. If lower leaves only, it's often natural aging. If all over, check for root rot by gently removing from pot.",
+    brown: "🍂 Brown tips = low humidity or underwatering. Brown spots = sunburn or fungal disease. Brown edges all around = drought stress. Try misting leaves or placing a tray of water nearby for humidity.",
+    wilting: "😔 Wilting can mean either too much OR too little water — check the soil first! Dry soil → water immediately. Wet soil → root rot likely, reduce watering and improve drainage.",
+    drooping: "😔 Drooping leaves often signal underwatering. Check soil moisture — if dry 2 inches down, water thoroughly. Also check for root-bound conditions or temperature stress.",
+    overwater: "💧 Signs of overwatering: yellowing, mushy stems, mold on soil, root rot smell. Let soil dry completely, improve drainage, and reduce watering frequency. Always check soil before watering!",
+    underwater: "🏜️ Signs of underwatering: crispy brown edges, dry crumbly soil, wilting that doesn't recover, dropping leaves. Water thoroughly until it drains from the bottom.",
+    monstera: "🌿 Monstera care: Bright indirect light, water every 1–2 weeks when top 2 inches are dry. Well-draining potting mix. Loves humidity — mist weekly. Fertilize monthly in spring/summer. Clean leaves for better photosynthesis.",
+    pothos: "🍃 Pothos is very forgiving! Tolerates low light, water every 1–2 weeks. Great for beginners. Trim and propagate trailing vines in water. Feed every 2–3 months with liquid fertilizer.",
+    cactus: "🌵 Cactus care: Bright direct sunlight, water sparingly — every 2–4 weeks in summer, monthly in winter. Never let roots sit in water. Cactus-specific soil mix is essential.",
+    succulent: "🪴 Succulent care: 6+ hours of bright light daily, water every 2–3 weeks in growing season, barely in winter. Well-draining sandy soil is essential. Mushy translucent leaves = overwatering.",
+    snake: "🐍 Snake plant (Sansevieria) is nearly indestructible! Water every 2–6 weeks, tolerates low light. Perfect for beginners and air purification. Only repot when severely root-bound.",
+    fiddle: "🎻 Fiddle leaf fig needs bright indirect light and stable conditions — hates drafts and being moved. Water when top inch is dry. Wipe dust off large leaves. Very sensitive to overwatering.",
+    peace: "☮️ Peace lily thrives in low-medium indirect light, water when leaves just start to droop. Enjoys humidity. Toxic to pets. Recovers quickly after watering.",
+    orchid: "🌸 Orchid care: Bright indirect light, water weekly by soaking roots 15 min then draining fully. Never let sit in water. Feed with diluted orchid fertilizer monthly. Cut spike near base after blooming.",
+    aloe: "🌵 Aloe vera: Bright direct sunlight, water every 3 weeks (let soil dry completely between). Cactus soil. Don't water into the rosette. Great for burns — break a leaf and apply gel directly.",
+    fern: "🌿 Ferns love high humidity and indirect light. Keep soil consistently moist but not soggy. Mist daily or use a humidity tray. Never let direct sun touch leaves.",
+    watering: "💧 General rule: stick your finger 2 inches into soil. Dry → water. Moist → wait. Most houseplants prefer to dry slightly between waterings. Overwatering kills more plants than underwatering!",
+    light: "☀️ Light guide: Direct sun = succulents, cacti, herbs. Bright indirect = Monstera, Pothos, Philodendron. Low light = Snake plant, ZZ plant, Peace lily. East-facing windows are ideal for most plants.",
+    fertilizer: "🌱 Fertilize during growing season (spring-summer) every 2–4 weeks with balanced liquid fertilizer. Stop in fall/winter. Signs of over-fertilizing: burnt leaf tips, white crust on soil.",
+    repot: "🪴 Repot when: roots circle the bottom, soil dries within a day, plant looks too big for pot, or roots emerge from drainage holes. Spring is the best time. Go up only 1–2 pot sizes.",
+    bugs: "🐛 Common pests: Spider mites (webbing, tiny dots) → spray water + neem oil. Mealybugs (white cottony clusters) → rubbing alcohol on cotton swab. Fungus gnats (tiny flies) → let soil dry + sticky traps.",
+    propagate: "✂️ Propagation: Stem cuttings in water (Pothos, Philodendron, Tradescantia). Leaf cuttings in soil (Succulents). Division at roots (Peace lily, Snake plant). Offsets/pups (Aloe, Spider plant).",
+    humidity: "💦 Most tropicals prefer 40–60% humidity. Boost it by: grouping plants, using a pebble tray with water under pots, running a humidifier, or misting regularly in warm weather.",
+    temperature: "🌡️ Most houseplants prefer 60–80°F (15–27°C). Keep away from cold drafts, AC vents, and heaters. Tropical plants dislike temperatures below 55°F. Sudden changes cause leaf drop.",
+    soil: "🪱 Soil guide: Tropicals → peat-based mix. Succulents/cacti → sandy fast-draining. Orchids → bark-based mix. Adding perlite improves drainage. Never use garden soil indoors — too heavy, harbors pests.",
+    air: "🌬️ Top air-purifying plants: Snake plant, Peace lily, Spider plant, Pothos, Rubber plant. Studies show meaningful air quality improvement with multiple plants in a room.",
+    indoor: "🏠 Best beginner indoor plants: Pothos, Snake plant, ZZ plant, Spider plant, Peace lily, Aloe vera, Chinese Evergreen, Rubber plant. All tolerate neglect, variable light, and irregular watering.",
+    toxic: "⚠️ Plants toxic to cats & dogs: Pothos, Philodendron, Peace lily, Aloe, Sago palm (very toxic), Lilies (deadly to cats). Pet-safe: Spider plant, Boston fern, African violet, Orchid, Marigold.",
+    default: "🌿 I'm your AI plant expert! Try asking: 'Why are my leaves turning yellow?', 'How do I care for a monstera?', 'How often to water succulents?', 'What plants are good for low light?', or 'How do I get rid of bugs?'"
+  };
+
+  function getPlantAnswer(question) {
+    const q = question.toLowerCase();
+    const checks = [
+      [['yellow','yellowing','turning yellow'], 'yellow'],
+      [['brown','browning','brown tip','brown edge'], 'brown'],
+      [['wilt','wilting'], 'wilting'],
+      [['droop','drooping'], 'drooping'],
+      [['overwater','over water','too much water','root rot'], 'overwater'],
+      [['underwater','under water','not enough water','bone dry','thirsty'], 'underwater'],
+      [['monstera','swiss cheese'], 'monstera'],
+      [['pothos','devil ivy'], 'pothos'],
+      [['cactus','cacti'], 'cactus'],
+      [['succulent'], 'succulent'],
+      [['snake plant','sansevieria','mother in law'], 'snake'],
+      [['fiddle leaf','ficus lyrata'], 'fiddle'],
+      [['peace lily','spathiphyllum'], 'peace'],
+      [['orchid','phalaenopsis'], 'orchid'],
+      [['aloe'], 'aloe'],
+      [['fern','boston fern'], 'fern'],
+      [['water','watering','how often'], 'watering'],
+      [['light','sunlight','sunshine','sun','shade','bright'], 'light'],
+      [['fertiliz','feed','nutrient'], 'fertilizer'],
+      [['repot','pot size','root bound','too small'], 'repot'],
+      [['bug','pest','insect','spider mite','mealybug','gnat','fly','aphid','scale'], 'bugs'],
+      [['propagat','cutting','grow new','clone'], 'propagate'],
+      [['humid','mist','spray'], 'humidity'],
+      [['temperature','cold','hot','heat','draft','freeze'], 'temperature'],
+      [['soil','dirt','potting','compost'], 'soil'],
+      [['air','purif','toxin','filter','clean air'], 'air'],
+      [['indoor','beginner','easy','low maintenance','lazy'], 'indoor'],
+      [['toxic','poison','safe','pet','cat','dog'], 'toxic'],
+    ];
+    for (const [keywords, key] of checks) {
+      if (keywords.some(kw => q.includes(kw))) return PLANT_KB[key];
+    }
+    const commonPlants = ['rose','lavender','basil','mint','tomato','tulip','daisy','sunflower','ivy','bamboo','palm','rubber plant','zz plant','spider plant','philodendron'];
+    for (const plant of commonPlants) {
+      if (q.includes(plant)) {
+        return `🌿 For ${plant}: Water when the top inch of soil is dry. Provide appropriate light (most prefer bright indirect). Feed monthly during growing season with balanced liquid fertilizer. Check leaf undersides for pests regularly. Describe any specific symptoms and I can help diagnose!`;
+      }
+    }
+    return PLANT_KB.default;
+  }
+
+  // ── GEMINI FREE API for image features ──
+  // Google Gemini 1.5 Flash: FREE (15 req/min, no credit card)
+  // Get your free key at: https://aistudio.google.com
+  function getGeminiKey() { return localStorage.getItem('leafy-gemini-key') || ''; }
+
+  async function analyzeImageWithGemini(base64, prompt) {
+    const key = getGeminiKey();
+    if (!key) throw new Error('no_key');
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+    const body = {
+      contents: [{ parts: [
+        { inline_data: { mime_type: 'image/jpeg', data: base64 } },
+        { text: prompt }
+      ]}],
+      generationConfig: { maxOutputTokens: 600 }
+    };
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || 'Gemini API error');
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  }
+
+  function showGeminiSetup(el) {
+    el.innerHTML = `
+      <div style="background:rgba(76,175,80,0.06);border:1px solid rgba(76,175,80,0.2);border-radius:12px;padding:1.25rem">
+        <div style="font-weight:600;color:var(--green-deep);margin-bottom:0.5rem">🔑 Set up Free Image AI</div>
+        <div style="font-size:0.82rem;color:var(--text-muted);line-height:1.7">
+          Google Gemini is <strong>100% free</strong> — no credit card needed.<br>
+          1️⃣ Go to <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--green-mid);font-weight:600">aistudio.google.com</a><br>
+          2️⃣ Sign in with Google → click <strong>"Create API key"</strong><br>
+          3️⃣ Copy the key and paste it in <strong>Settings → AI Tools</strong><br>
+        </div>
+        <button onclick="showPage('settings')" style="margin-top:0.75rem;background:var(--green-mid);color:white;border:none;padding:0.5rem 1rem;border-radius:8px;cursor:pointer;font-family:inherit">Go to Settings →</button>
+      </div>`;
+  }
+
+  // ── AI CHATBOT (uses knowledge base — works instantly, no key) ──
+  function toggleChatbot() { document.getElementById('chatbot-panel').classList.toggle('open'); }
+  async function sendChat() {
+    const input = document.getElementById('chatbot-input');
+    const msg = input.value.trim();
+    if (!msg) return;
+    addChatMsg(msg, 'user');
+    input.value = '';
+    document.getElementById('chat-suggestions').style.display = 'none';
+    addChatMsg('Thinking…', 'bot thinking', 'thinking-msg');
+    await new Promise(r => setTimeout(r, 500 + Math.random() * 400));
+    removeChatMsg('thinking-msg');
+    addChatMsg(getPlantAnswer(msg), 'bot');
+    aiQueries++; setUserData('ai-queries', aiQueries);
+  }
+  function sendChatSuggestion(msg) { document.getElementById('chatbot-input').value = msg; sendChat(); }
+  function addChatMsg(text, cls, id) {
+    const msgs = document.getElementById('chatbot-messages');
+    const div = document.createElement('div');
+    div.className = 'chat-msg ' + cls; div.textContent = text;
+    if (id) div.id = id;
+    msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+  }
+  function removeChatMsg(id) { const el = document.getElementById(id); if (el) el.remove(); }
+
+  // ── AI IDENTIFY ──
+  let identifyBase64 = null;
+  function handleIdentifyUpload(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      identifyBase64 = e.target.result.split(',')[1];
+      document.getElementById('identify-img').src = e.target.result;
+      document.getElementById('identify-preview').style.display = 'block';
+      document.getElementById('identify-btn').style.display = 'inline-flex';
+      document.getElementById('identify-result').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+  async function identifyPlant() {
+    if (!identifyBase64) return;
+    const btn = document.getElementById('identify-btn');
+    btn.disabled = true; btn.innerHTML = '<span class="ai-loading">Analyzing...</span>';
+    const result = document.getElementById('identify-result');
+    result.style.display = 'none';
+    try {
+      const text = await analyzeImageWithGemini(identifyBase64, 'Identify this plant. Respond in this exact format:\nNAME: [common name]\nSCIENTIFIC: [scientific name]\nTYPE: [Tropical/Succulent/Herb/Flowering/Fern/Other]\nWATERING: [watering frequency]\nSUNLIGHT: [light requirement]\nDESCRIPTION: [2-3 sentence care overview]\nTAGS: [tag1,tag2,tag3]');
+      const get = key => { const m = text.match(new RegExp(key + ': (.+)')); return m ? m[1].trim() : ''; };
+      result.style.display = 'block';
+      const tags = (get('TAGS') || '').split(',').map(t => t.trim()).filter(Boolean);
+      result.innerHTML = `
+        <div class="ai-result-name">🌿 ${get('NAME') || 'Plant identified'}</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);font-style:italic;margin-bottom:0.5rem">${get('SCIENTIFIC')}</div>
+        <div class="ai-result-desc">${get('DESCRIPTION')}</div>
+        <div class="ai-result-tags">
+          ${get('TYPE') ? `<span class="ai-tag">🌱 ${get('TYPE')}</span>` : ''}
+          ${get('WATERING') ? `<span class="ai-tag">💧 ${get('WATERING')}</span>` : ''}
+          ${get('SUNLIGHT') ? `<span class="ai-tag">☀️ ${get('SUNLIGHT')}</span>` : ''}
+          ${tags.map(t => `<span class="ai-tag">${t}</span>`).join('')}
+        </div>
+        <button class="btn-ai" style="margin-top:1rem;padding:0.6rem 1.2rem;font-size:0.85rem" onclick="addIdentifiedPlant('${get('NAME').replace(/'/g,"")}','${get('TYPE').replace(/'/g,"")}')">+ Add to My Garden</button>`;
+      aiQueries++; setUserData('ai-queries', aiQueries);
+    } catch (err) {
+      result.style.display = 'block';
+      if (err.message === 'no_key') { showGeminiSetup(result); }
+      else { result.innerHTML = `<div style="color:var(--rust)">⚠️ Error: ${err.message}</div>`; }
+    }
+    btn.disabled = false; btn.innerHTML = 'Identify Plant ✨';
+  }
+  function addIdentifiedPlant(name, type) {
+    if (!name) return;
+    plants.push({ id: Date.now(), emoji: '🌿', name, type: type || 'Other', location: 'Living Room', waterEvery: 7, lastWatered: 0, health: 100, waterCount: 0, notes: 'Added via AI identification', history: [] });
+    savePlants(); showPage('dashboard'); showToast('🌿 ' + name + ' added to your garden!');
+  }
+
+  // ── AI DIAGNOSE ──
+  let diagnoseBase64 = null;
+  function handleDiagnoseUpload(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      diagnoseBase64 = e.target.result.split(',')[1];
+      document.getElementById('diagnose-img').src = e.target.result;
+      document.getElementById('diagnose-preview').style.display = 'block';
+      document.getElementById('diagnose-btn').style.display = 'inline-flex';
+      document.getElementById('diagnose-result').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+  async function diagnosePlant() {
+    if (!diagnoseBase64) return;
+    const btn = document.getElementById('diagnose-btn');
+    btn.disabled = true; btn.innerHTML = '<span class="ai-loading">Diagnosing...</span>';
+    const result = document.getElementById('diagnose-result');
+    result.style.display = 'none';
+    try {
+      const text = await analyzeImageWithGemini(diagnoseBase64, 'Diagnose this plant for health issues. Respond in this format:\nSTATUS: [Healthy / Needs Attention / Critical]\nISSUE: [main issue or "None detected"]\nCAUSE: [likely cause]\nTREATMENT: [specific steps in 2-3 sentences]\nPREVENTION: [prevention tip]');
+      const get = key => { const m = text.match(new RegExp(key + ': (.+)')); return m ? m[1].trim() : ''; };
+      const status = get('STATUS');
+      const isHealthy = status.toLowerCase().includes('healthy');
+      result.className = 'ai-result' + (isHealthy ? ' healthy' : '');
+      result.style.display = 'block';
+      result.innerHTML = `
+        <div class="ai-result-name">${isHealthy ? '✅' : '⚠️'} ${status}</div>
+        ${!isHealthy ? `<div style="font-weight:600;color:var(--rust);margin-bottom:0.5rem">${get('ISSUE')}</div>` : ''}
+        ${get('CAUSE') ? `<div class="ai-result-desc"><strong>Cause:</strong> ${get('CAUSE')}</div>` : ''}
+        ${get('TREATMENT') ? `<div class="ai-result-desc" style="margin-top:0.5rem"><strong>Treatment:</strong> ${get('TREATMENT')}</div>` : ''}
+        ${get('PREVENTION') ? `<div class="ai-result-desc" style="margin-top:0.5rem;font-size:0.82rem;opacity:0.8">💡 ${get('PREVENTION')}</div>` : ''}`;
+      aiQueries++; setUserData('ai-queries', aiQueries);
+    } catch (err) {
+      result.style.display = 'block';
+      if (err.message === 'no_key') { showGeminiSetup(result); }
+      else { result.innerHTML = `<div style="color:var(--rust)">⚠️ Error: ${err.message}</div>`; }
+    }
+    btn.disabled = false; btn.innerHTML = 'Diagnose Health 🩺';
+  }
+
+  // ── SMART WATERING (knowledge base — no key needed) ──
+  async function getWateringSuggestion() {
+    const input = document.getElementById('watering-plant').value.trim();
+    if (!input) { showToast('Please describe your plant and environment'); return; }
+    const result = document.getElementById('watering-result');
+    result.style.display = 'block';
+    result.innerHTML = '<div class="ai-loading">Getting smart schedule...</div>';
+    await new Promise(r => setTimeout(r, 500));
+    const q = input.toLowerCase();
+    let schedule = '';
+    if (q.match(/cactus|cacti/)) {
+      schedule = "💧 <strong>Frequency:</strong> Every 2–4 weeks in summer, once a month in winter.<br>🌅 <strong>Best time:</strong> Morning, so excess moisture evaporates during the day.<br>🍂 <strong>Seasonal:</strong> Drastically reduce in winter — near dormancy.<br>🪱 <strong>Soil check:</strong> Must be bone dry before next watering.<br>💦 <strong>Humidity:</strong> Prefers dry air — avoid misting or humidifiers.";
+    } else if (q.match(/succulent/)) {
+      schedule = "💧 <strong>Frequency:</strong> Every 2–3 weeks in growing season, monthly in winter.<br>🌅 <strong>Best time:</strong> Morning is ideal.<br>🍂 <strong>Seasonal:</strong> Reduce by 70–80% in winter dormancy.<br>🪱 <strong>Soil check:</strong> Sandy soil must fully dry between waterings.<br>💦 <strong>Humidity:</strong> Low humidity is best for succulents.";
+    } else if (q.match(/orchid/)) {
+      schedule = "💧 <strong>Frequency:</strong> Once a week — soak roots 15 min, then drain fully.<br>🌅 <strong>Best time:</strong> Morning so roots dry before evening.<br>🍂 <strong>Seasonal:</strong> Slightly less in winter rest period.<br>🪱 <strong>Soil check:</strong> Bark mix should be almost dry between waterings.<br>💦 <strong>Humidity:</strong> 50–70% — use a humidity tray or group with other plants.";
+    } else if (q.match(/fern|boston/)) {
+      schedule = "💧 <strong>Frequency:</strong> Every 2–4 days — keep consistently moist.<br>🌅 <strong>Best time:</strong> Morning or evening — avoid hot midday watering.<br>🍂 <strong>Seasonal:</strong> Slightly less in winter, never let dry completely.<br>🪱 <strong>Soil check:</strong> Top inch should stay slightly moist at all times.<br>💦 <strong>Humidity:</strong> Mist daily! Ferns need 60–80% humidity to thrive.";
+    } else if (q.match(/herb|basil|mint|rosemary|thyme/)) {
+      schedule = "💧 <strong>Frequency:</strong> Every 1–3 days depending on heat and pot size.<br>🌅 <strong>Best time:</strong> Morning for outdoor herbs; any time indoors.<br>🍂 <strong>Seasonal:</strong> More frequent in summer heat, less in cooler months.<br>🪱 <strong>Soil check:</strong> Top inch dry but not bone-dry — herbs dislike soggy roots.<br>💦 <strong>Humidity:</strong> Normal indoor humidity works fine for most herbs.";
+    } else if (q.match(/monstera|philodendron|pothos|tropical/)) {
+      schedule = "💧 <strong>Frequency:</strong> Every 7–14 days — when top 2 inches of soil are dry.<br>🌅 <strong>Best time:</strong> Morning is best for tropical plants.<br>🍂 <strong>Seasonal:</strong> More in summer, every 3–4 weeks in winter.<br>🪱 <strong>Soil check:</strong> Finger test 2 inches deep — dry = water time!<br>💦 <strong>Humidity:</strong> Mist weekly or group plants together for 50%+ humidity.";
+    } else {
+      schedule = "💧 <strong>Frequency:</strong> Every 7–10 days for most houseplants — always check first!<br>🌅 <strong>Best time:</strong> Morning — plants absorb moisture before the heat of day.<br>🍂 <strong>Seasonal:</strong> More frequent in spring/summer; reduce by 30–50% in winter.<br>🪱 <strong>Soil check:</strong> Stick finger 2 inches into soil — dry = water; moist = wait.<br>💦 <strong>Humidity tip:</strong> Group plants together to naturally share moisture in the air.";
+    }
+    result.innerHTML = '<div class="ai-result-name">💧 Smart Watering Schedule</div><div class="ai-result-desc" style="line-height:2">' + schedule + '</div>';
+    aiQueries++; setUserData('ai-queries', aiQueries);
+  }
+
+  // ── TOAST ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // ── KEYBOARD ──
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      closeModal(); closeEditModal(); closeDetailModal(); closeJournalModal();
+      document.getElementById('chatbot-panel').classList.remove('open');
+      closeEmailNotif();
+    }
+  });
+
+  // ── INIT ──
+  try {
+    const existingUser = getCurrentUser();
+    if (existingUser) {
+      document.getElementById('auth-overlay').classList.remove('active');
+      initUserSession();
+      if (!localStorage.getItem('leafy-onboarded')) {
+        document.getElementById('onboarding-overlay').classList.add('active');
+      }
+    }
+  } catch(e) {
+    // If anything fails on init, show auth screen cleanly
+    console.warn('Init error:', e);
+  }
+  // Always render dashboard (shows empty state if not logged in)
+  try { renderDashboard(); } catch(e) { console.warn('Dashboard render error:', e); }
+</script>
+</body>
+</html>
