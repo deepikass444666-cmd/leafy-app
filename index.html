@@ -2118,7 +2118,7 @@ https://leafy-app-navy.vercel.app`;
   function saveApiKey() {
     const ak = document.getElementById('anthropic-key-input').value.trim();
     if (!ak) { showToast('Please enter your Gemini API key'); return; }
-    if (!ak.startsWith('AIza')) { showToast('⚠️ Gemini keys start with "AIza" — double-check your key'); return; }
+    if (ak.length < 10) { showToast('⚠️ Gemini keys start with "AIza" — double-check your key'); return; }
     localStorage.setItem('leafy-gemini-key', ak);
     showToast('Gemini key saved! 🔑 Image AI is now active.');
   }
